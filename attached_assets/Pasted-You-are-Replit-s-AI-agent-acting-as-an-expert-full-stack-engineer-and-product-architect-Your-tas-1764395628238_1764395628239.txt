@@ -1,0 +1,429 @@
+You are Replit’s AI agent acting as an expert full-stack engineer and product architect.
+
+Your task:  
+Design and implement a **production-style MVP web app** for **Rent-A-Buddy™**, a safety-first, non-romantic companionship platform, inside THIS Replit project.
+
+You MUST:
+- Plan first (outline architecture, file structure, and steps).
+- Then implement the code in this Replit.
+- Use clean, well-structured, commented code.
+- Make sure the app actually runs in Replit with working commands.
+
+========================================
+1. TECH STACK (REPLIT-FRIENDLY)
+========================================
+
+Use a standard Replit-friendly full-stack setup:
+
+- Frontend:  
+  - React + TypeScript  
+  - Vite (or Create React App if Vite unavailable)  
+  - Tailwind CSS for styling
+
+- Backend:  
+  - Node.js + Express (TypeScript preferred, but JS is acceptable if needed)  
+  - REST API endpoints
+
+- Database & ORM:  
+  - Prisma ORM  
+  - SQLite as the primary DB (file-based, works well in Replit)
+
+- Auth:  
+  - JWT or session-based auth (pick what’s easiest to implement reliably in Replit)  
+  - Passwords must be hashed (bcrypt or equivalent)
+
+- Tooling:  
+  - npm or pnpm
+  - ESLint + Prettier (if possible)
+  - Environment variables via `.env` (AND provide an example `.env.example`)
+
+If something in this stack is unsupported or problematic in Replit, choose the closest alternative and clearly explain at the top of your output what you changed and why.
+
+========================================
+2. HIGH-LEVEL PRODUCT DESCRIPTION
+========================================
+
+Build a web app for **Rent-A-Buddy™**, where:
+
+- **Clients** can:
+  - Sign up / log in
+  - Complete a simple client profile
+  - Browse Buddies
+  - View Buddy profiles
+  - Request bookings (sessions)
+  - View upcoming/past bookings
+  - Leave reviews after sessions
+  - Accept a Client Safety Agreement during onboarding
+
+- **Buddies** can:
+  - Sign up as Buddies
+  - Complete a Buddy profile (bio, city, hourly rate, skills, interests)
+  - See a Buddy Certification checklist
+  - Set availability (simple weekly slots)
+  - See incoming booking requests
+  - Accept/decline bookings
+  - View their schedule of confirmed sessions
+  - Accept Code of Conduct & Safety Protocol
+
+- **Admins** can:
+  - Log in as admin
+  - See dashboards for users, bookings, verifications, incidents
+  - Approve/reject verifications
+  - Suspend/activate users
+  - Update status of incident reports
+
+This is NOT a dating app and NOT an escort service.  
+The UI and copy must clearly emphasize **safe, non-romantic companionship**.
+
+========================================
+3. USER ROLES
+========================================
+
+Implement these roles:
+
+- CLIENT
+- BUDDY
+- ADMIN
+
+Store role on the User model and enforce it in both backend routes and frontend routing / UI.
+
+========================================
+4. DATABASE SCHEMA (PRISMA MODELS)
+========================================
+
+Use Prisma with SQLite and define at least these models:
+
+- User
+  - id
+  - name
+  - email (unique)
+  - passwordHash
+  - role: "CLIENT" | "BUDDY" | "ADMIN"
+  - status: "ACTIVE" | "SUSPENDED"
+  - createdAt
+  - updatedAt
+
+- ClientProfile
+  - id
+  - userId (FK → User)
+  - city
+  - shortBio
+  - safetyAgreementAcceptedAt (DateTime)
+
+- BuddyProfile
+  - id
+  - userId (FK → User)
+  - headline
+  - bio
+  - city
+  - hourlyRate (Float or Int)
+  - experienceYears (Int)
+  - languages (string or JSON field)
+  - tags (string or JSON)
+  - ratingAverage (Float)
+  - ratingCount (Int)
+  - isCertified (Boolean)
+  - codeOfConductAcceptedAt (DateTime)
+  - safetyProtocolAcceptedAt (DateTime)
+
+- BuddyAvailability
+  - id
+  - buddyProfileId (FK → BuddyProfile)
+  - dayOfWeek (Int 0–6 or string)
+  - startTime (string, e.g. "09:00")
+  - endTime (string, e.g. "12:00")
+  - isActive (Boolean)
+
+- Verification
+  - id
+  - userId (FK → User)
+  - type: "ID" | "BACKGROUND_CHECK" | "CERTIFICATION" | "OTHER"
+  - status: "PENDING" | "APPROVED" | "REJECTED"
+  - submittedAt
+  - reviewedAt
+  - reviewedByAdminId (FK → User)
+  - notes
+
+- Booking
+  - id
+  - clientId (FK → User)
+  - buddyId (FK → User)
+  - startTime (DateTime)
+  - endTime (DateTime)
+  - status: "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELED" | "REJECTED"
+  - locationType: "PUBLIC" | "VIRTUAL"
+  - locationDescription (string)
+  - clientNotes (string)
+  - buddyNotes (string)
+  - createdAt
+  - updatedAt
+
+- Review
+  - id
+  - bookingId (FK → Booking)
+  - clientId (FK → User)
+  - buddyId (FK → User)
+  - rating (Int 1–5)
+  - comment (string)
+  - createdAt
+
+- Message (simple session chat)
+  - id
+  - bookingId (FK → Booking)
+  - senderId (FK → User)
+  - content (string)
+  - createdAt
+
+- IncidentReport
+  - id
+  - bookingId (FK → Booking)
+  - reporterId (FK → User)
+  - reportedUserId (FK → User)
+  - type: "SAFETY" | "BOUNDARY" | "BEHAVIOR" | "OTHER"
+  - description (string)
+  - status: "OPEN" | "UNDER_REVIEW" | "RESOLVED"
+  - createdAt
+  - updatedAt
+  - handledByAdminId (FK → User)
+  - resolutionNotes (string)
+
+You can add small helper tables if absolutely necessary, but keep this MVP lean.
+
+========================================
+5. FEATURES TO IMPLEMENT (MVP)
+========================================
+
+A. Authentication & Authorization
+---------------------------------
+- User registration (client or buddy)
+- Login / Logout
+- Password hashing
+- JWT or sessions for auth
+- Middleware to protect:
+  - Client dashboard routes
+  - Buddy dashboard routes
+  - Admin routes
+
+B. Client Features
+------------------
+- Client onboarding flow:
+  - After signup, complete ClientProfile with city & short bio
+  - Accept Client Safety Agreement (checkbox + store timestamp)
+- Browse Buddies:
+  - Simple filter by city and optionally hourly rate
+- Buddy detail page:
+  - Show profile, bio, hourly rate, rating, availability
+- Create booking request:
+  - Select Buddy, date/time range within their availability
+  - Choose locationType: PUBLIC or VIRTUAL
+  - Add short notes
+- View “My Bookings”:
+  - Tabs: Upcoming, Past
+  - Click into booking details
+- Post-session review:
+  - After COMPLETED booking, client can submit rating + comment
+
+C. Buddy Features
+-----------------
+- Buddy onboarding flow:
+  - After signup as Buddy, complete BuddyProfile (headline, bio, city, hourlyRate, etc.)
+  - Accept Buddy Code of Conduct + Safety Protocol (checkbox + store timestamps)
+- Availability management:
+  - Weekly schedule table (day-of-week + time ranges)
+- Booking requests:
+  - View PENDING bookings
+  - Accept or Reject
+- Sessions list:
+  - View CONFIRMED/COMPLETED bookings in a simple chronological list
+
+D. Admin Features
+-----------------
+- Admin dashboard:
+  - Summary counts for Users, Buddies, Bookings, IncidentReports
+- Users management:
+  - Table of users with filters by role and status
+  - Ability to change status (ACTIVE/SUSPENDED)
+- Verifications:
+  - List of pending verifications
+  - Approve/Reject
+- Incident reports:
+  - View list of incident reports
+  - Change status and add resolution notes
+
+E. Safety & Policy UX
+---------------------
+- During signup/onboarding:
+  - For Clients: show **Client Safety Agreement**, **Zero Sexual Content Policy**, **Anti-Escort Clause**
+  - For Buddies: show **Buddy Code of Conduct**, **Buddy Safety Protocol**, **Zero Sexual Content Policy**, **Anti-Escort Clause**
+- Store acceptance timestamps in the DB.
+- Display a “Non-romantic, non-escort service” disclaimer in the footer and relevant screens.
+
+F. Messaging (MVP)
+------------------
+- For each booking, allow messages between client and buddy.
+- Display messages on a Booking Detail page.
+- Simple send box + message list ordered by createdAt.
+
+========================================
+6. FRONTEND ROUTES / PAGES
+========================================
+
+Use a standard React Router setup with these logical pages:
+
+Public:
+- `/` – Landing page (hero, “What is Rent-A-Buddy?”, safety highlights, primary CTAs)
+- `/login`
+- `/register` (option: choose Client or Buddy)
+- `/buddies` – public browsing (limited info), with CTA to sign up/sign in
+- `/policies` – static page with summary of key policies
+
+Authenticated:
+
+Client:
+- `/dashboard/client` – overview: upcoming bookings, quick links
+- `/dashboard/client/profile`
+- `/dashboard/client/bookings`
+- `/dashboard/client/bookings/:id` – booking details + messaging + review (if eligible)
+- `/dashboard/client/settings` (even if minimal)
+
+Buddy:
+- `/dashboard/buddy` – overview: pending requests, upcoming sessions
+- `/dashboard/buddy/profile`
+- `/dashboard/buddy/availability`
+- `/dashboard/buddy/bookings`
+- `/dashboard/buddy/bookings/:id` – booking details + messaging
+- `/dashboard/buddy/settings`
+
+Admin:
+- `/dashboard/admin` – stats summary
+- `/dashboard/admin/users`
+- `/dashboard/admin/bookings`
+- `/dashboard/admin/incidents`
+- `/dashboard/admin/verifications`
+
+========================================
+7. UI/UX REQUIREMENTS
+========================================
+
+- Use Tailwind CSS.
+- Design principles:
+  - Clean, modern, friendly
+  - Warm colors with emphasis on safety and professionalism
+- Reusable layout:
+  - Public layout for marketing pages
+  - Auth layout for login/register
+  - Dashboard layout for logged-in users with sidebar/topbar
+- Always emphasize:
+  - Safety first
+  - Non-romantic, non-escort service
+  - Respect, boundaries, and professionalism
+
+========================================
+8. IMPLEMENTATION PHASES (IN THIS REPLIT)
+========================================
+
+Follow these phases step-by-step and keep code organized:
+
+Phase 1: Project Setup
+----------------------
+- Set up a full-stack structure in this Replit:
+  - `backend/` folder for Express API
+  - `frontend/` folder for React app
+- Configure root `package.json` scripts or separate ones with clear instructions.
+- Create `.replit` or other necessary config so `npm run dev` (or equivalent) starts both frontend & backend (can use concurrently if desired).
+
+Phase 2: Prisma + DB
+--------------------
+- Initialize Prisma in `backend/`.
+- Configure SQLite as the datasource.
+- Add the schema with all models above.
+- Run migrations.
+- Create a `seed` script to:
+  - Insert 1–2 test clients
+  - Insert 2–3 test buddies with profiles and availability
+  - Insert 1 admin user
+  - Insert a few sample bookings & reviews
+
+Phase 3: Auth
+-------------
+- Implement backend auth endpoints (`/api/auth/register`, `/api/auth/login`, `/api/auth/logout`).
+- Use JWT or sessions with secure password hashing.
+- Implement middleware to:
+  - Attach user info to request
+  - Enforce role-based access for protected routes
+
+Phase 4: Client Flows
+---------------------
+- Implement frontend pages and API calls for:
+  - Client profile onboarding
+  - Viewing and searching buddies
+  - Booking creation
+  - Viewing and managing client bookings
+  - Posting reviews after completed bookings
+
+Phase 5: Buddy Flows
+--------------------
+- Implement frontend + backend for:
+  - Buddy profile onboarding and editing
+  - Availability management
+  - Viewing and responding to booking requests
+  - Viewing confirmed sessions
+
+Phase 6: Admin Dashboard
+------------------------
+- Implement admin pages and endpoints for:
+  - Listing users + changing status
+  - Viewing bookings
+  - Reviewing verifications
+  - Managing incident reports
+
+Phase 7: Messaging
+------------------
+- Implement booking-level messaging API (CRUD for messages).
+- Add simple chat UI to booking detail pages for both client & buddy.
+
+Phase 8: Safety & Policies
+--------------------------
+- Add static components/pages for:
+  - Zero Sexual Content Policy
+  - Anti-Escort Clause
+  - Client Safety Agreement
+  - Buddy Code of Conduct
+  - Buddy Safety Protocol
+- Wire checkboxes and acceptance timestamps into the onboarding flows.
+
+Phase 9: Polish & README
+------------------------
+- Add loading and error states in frontend.
+- Add basic input validation on key forms.
+- Create a `README.md` at the project root documenting:
+  - Stack
+  - How to install dependencies
+  - How to set up `.env`
+  - How to run migrations and seed
+  - How to start the app in Replit
+  - Test login credentials for:
+    - Client
+    - Buddy
+    - Admin
+
+========================================
+9. OUTPUT REQUIREMENTS
+========================================
+
+When you finish or at major checkpoints, you must:
+
+- Show the **folder structure**.
+- Show key backend files (server, routes, Prisma schema).
+- Show key frontend files (main layout, routing, main pages).
+- Provide **exact commands** to:
+  - Install dependencies
+  - Run migrations
+  - Seed the database
+  - Start the dev servers
+- Provide test users such as:
+  - Client: client@example.com / password123
+  - Buddy: buddy@example.com / password123
+  - Admin: admin@example.com / password123
+
+Ensure the app runs successfully inside this Replit environment
