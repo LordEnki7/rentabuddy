@@ -3,6 +3,7 @@ import { ShieldCheck, HeartHandshake, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import logoImage from "@assets/logo_1764395893254.png";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
@@ -26,10 +27,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/">
             <a className="flex items-center gap-2 group">
-              <div className="bg-primary/10 p-2 rounded-full group-hover:bg-primary/20 transition-colors">
-                <HeartHandshake className="h-6 w-6 text-primary" />
-              </div>
-              <span className="font-heading font-bold text-xl tracking-tight text-foreground">Rent-A-Buddy™</span>
+              <img src={logoImage} alt="Rent-A-Buddy" className="h-12 w-auto object-contain" />
             </a>
           </Link>
 
@@ -87,8 +85,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
             <div className="md:col-span-2">
               <div className="flex items-center gap-2 mb-4">
-                <ShieldCheck className="h-6 w-6 text-primary" />
-                <span className="font-heading font-bold text-lg">Rent-A-Buddy™</span>
+                <img src={logoImage} alt="Rent-A-Buddy" className="h-10 w-auto object-contain" />
               </div>
               <p className="text-muted-foreground max-w-md leading-relaxed">
                 A safety-first community for non-romantic companionship. 
