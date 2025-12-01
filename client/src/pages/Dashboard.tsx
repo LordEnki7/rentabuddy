@@ -6,11 +6,26 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MOCK_BOOKINGS } from "@/lib/mockData";
-import { CalendarDays, MessageSquare, Clock, MapPin } from "lucide-react";
+import { CalendarDays, MessageSquare, Clock, MapPin, Phone } from "lucide-react";
+import { ActiveCallModal } from "@/components/ActiveCallModal";
+import { useState } from "react";
 
 export default function Dashboard() {
+  const [isCallOpen, setIsCallOpen] = useState(false);
+  const [activeCallBuddy, setActiveCallBuddy] = useState<{name: string, image?: string} | null>(null);
+
+  const startCall = (name: string) => {
+    setActiveCallBuddy({ name });
+    setIsCallOpen(true);
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
+      <ActiveCallModal 
+        isOpen={isCallOpen} 
+        onClose={() => setIsCallOpen(false)}
+        buddyName={activeCallBuddy?.name || "Buddy"}
+      />
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
           <Avatar className="h-16 w-16 border-2 border-white shadow-md">
@@ -80,9 +95,16 @@ export default function Dashboard() {
                     
                     <div className="flex gap-3 w-full md:w-auto">
                       <Button variant="outline" className="flex-1 md:flex-none">View Details</Button>
-                      <Button className="flex-1 md:flex-none" disabled={booking.status !== 'CONFIRMED'}>
-                        <MessageSquare className="h-4 w-4 mr-2" />
-                        Message
+                      <Button 
+                        className="flex-1 md:flex-none" 
+                        disabled={booking.status !== 'CONFIRMED'}
+                        onClick={() => startCall(booking.buddyName)}
+                      >
+                        <Phone className="h-4 w-4 mr-2" />
+                        Call
+                      </Button>
+                      <Button variant="secondary" size="icon" disabled={booking.status !== 'CONFIRMED'}>
+                        <MessageSquare className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
