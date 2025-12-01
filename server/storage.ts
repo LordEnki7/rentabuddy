@@ -1,38 +1,230 @@
-import { type User, type InsertUser } from "@shared/schema";
-import { randomUUID } from "crypto";
+import { drizzle } from "drizzle-orm/neon-serverless";
+import { Pool } from "@neondatabase/serverless";
+import { eq, and, like, or, desc } from "drizzle-orm";
+import bcrypt from "bcrypt";
+import {
+  users,
+  clientProfiles,
+  buddyProfiles,
+  bookings,
+  reviews,
+  type User,
+  type InsertUser,
+  type ClientProfile,
+  type InsertClientProfile,
+  type BuddyProfile,
+  type InsertBuddyProfile,
+  type Booking,
+  type InsertBooking,
+  type Review,
+  type InsertReview,
+  type RegisterInput,
+} from "@shared/schema";
 
-// modify the interface with any CRUD methods
-// you might need
+const pool = new Pool({ connectionString: process.env.DATABASE_URL! });
+export const db = drizzle(pool);
 
 export interface IStorage {
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  // Auth
+  createUser(input: RegisterInput): Promise<User>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  getUserById(id: string): Promise<User | undefined>;
+  verifyPassword(email: string, password: string): Promise<User | null>;
+
+  // Client Profiles
+  createClientProfile(profile: InsertClientProfile): Promise<ClientProfile>;
+  getClientProfile(userId: string): Promise<ClientProfile | undefined>;
+  updateClientProfile(userId: string, updates: Partial<InsertClientProfile>): Promise<ClientProfile | undefined>;
+
+  // Buddy Profiles
+  createBuddyProfile(profile: InsertBuddyProfile): Promise<BuddyProfile>;
+  getBuddyProfile(userId: string): Promise<BuddyProfile | undefined>;
+  updateBuddyProfile(userId: string, updates: Partial<InsertBuddyProfile>): Promise<BuddyProfile | undefined>;
+  getAllBuddies(filters?: { city?: string, maxRate?: number }): Promise<Array<BuddyProfile & { user: User }>>;
+
+  // Bookings
+  createBooking(booking: InsertBooking): Promise<Booking>;
+  getBooking(id: string): Promise<Booking | undefined>;
+  getBookingsByClient(clientId: string): Promise<Booking[]>;
+  getBookingsByBuddy(buddyId: string): Promise<Booking[]>;
+  updateBookingStatus(id: string, status: string): Promise<Booking | undefined>;
+
+  // Reviews
+  createReview(review: InsertReview): Promise<Review>;
+  getReviewsForBuddy(buddyId: string): Promise<Review[]>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
+export class DbStorage implements IStorage {
+  // Auth methods
+  async createUser(input: RegisterInput): Promise<User> {
+    const passwordHash = await bcrypt.hash(input.password, 10);
+    
+    const [user] = await db.insert(users).values({
+      email: input.email,
+      name: input.name,
+      passwordHash,
+      role: input.role,
+      status: 'ACTIVE',
+    }).returning();
 
-  constructor() {
-    this.users = new Map();
-  }
+    // Create associated profile based on role
+    if (input.role === 'CLIENT') {
+      await db.insert(clientProfiles).values({
+        userId: user.id,
+        city: input.city || null,
+        safetyAgreementAcceptedAt: input.safetyAgreementAccepted ? new Date() : null,
+      });
+    } else if (input.role === 'BUDDY') {
+      await db.insert(buddyProfiles).values({
+        userId: user.id,
+        city: input.city || null,
+        codeOfConductAcceptedAt: input.codeOfConductAccepted ? new Date() : null,
+        safetyProtocolAcceptedAt: input.codeOfConductAccepted ? new Date() : null,
+      });
+    }
 
-  async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
-  }
-
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
     return user;
   }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async getUserById(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async verifyPassword(email: string, password: string): Promise<User | null> {
+    const user = await this.getUserByEmail(email);
+    if (!user) return null;
+
+    const isValid = await bcrypt.compare(password, user.passwordHash);
+    return isValid ? user : null;
+  }
+
+  // Client Profile methods
+  async createClientProfile(profile: InsertClientProfile): Promise<ClientProfile> {
+    const [clientProfile] = await db.insert(clientProfiles).values(profile).returning();
+    return clientProfile;
+  }
+
+  async getClientProfile(userId: string): Promise<ClientProfile | undefined> {
+    const [profile] = await db.select().from(clientProfiles).where(eq(clientProfiles.userId, userId));
+    return profile;
+  }
+
+  async updateClientProfile(userId: string, updates: Partial<InsertClientProfile>): Promise<ClientProfile | undefined> {
+    const [profile] = await db.update(clientProfiles)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(clientProfiles.userId, userId))
+      .returning();
+    return profile;
+  }
+
+  // Buddy Profile methods
+  async createBuddyProfile(profile: InsertBuddyProfile): Promise<BuddyProfile> {
+    const [buddyProfile] = await db.insert(buddyProfiles).values(profile).returning();
+    return buddyProfile;
+  }
+
+  async getBuddyProfile(userId: string): Promise<BuddyProfile | undefined> {
+    const [profile] = await db.select().from(buddyProfiles).where(eq(buddyProfiles.userId, userId));
+    return profile;
+  }
+
+  async updateBuddyProfile(userId: string, updates: Partial<InsertBuddyProfile>): Promise<BuddyProfile | undefined> {
+    const [profile] = await db.update(buddyProfiles)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(buddyProfiles.userId, userId))
+      .returning();
+    return profile;
+  }
+
+  async getAllBuddies(filters?: { city?: string, maxRate?: number }): Promise<Array<BuddyProfile & { user: User }>> {
+    let query = db.select({
+      id: buddyProfiles.id,
+      userId: buddyProfiles.userId,
+      headline: buddyProfiles.headline,
+      bio: buddyProfiles.bio,
+      city: buddyProfiles.city,
+      hourlyRate: buddyProfiles.hourlyRate,
+      experienceYears: buddyProfiles.experienceYears,
+      languages: buddyProfiles.languages,
+      tags: buddyProfiles.tags,
+      ratingAverage: buddyProfiles.ratingAverage,
+      ratingCount: buddyProfiles.ratingCount,
+      isCertified: buddyProfiles.isCertified,
+      codeOfConductAcceptedAt: buddyProfiles.codeOfConductAcceptedAt,
+      safetyProtocolAcceptedAt: buddyProfiles.safetyProtocolAcceptedAt,
+      profileImage: buddyProfiles.profileImage,
+      createdAt: buddyProfiles.createdAt,
+      updatedAt: buddyProfiles.updatedAt,
+      user: users,
+    })
+      .from(buddyProfiles)
+      .innerJoin(users, eq(users.id, buddyProfiles.userId))
+      .where(eq(users.status, 'ACTIVE'));
+
+    return await query as any;
+  }
+
+  // Booking methods
+  async createBooking(booking: InsertBooking): Promise<Booking> {
+    const [newBooking] = await db.insert(bookings).values(booking).returning();
+    return newBooking;
+  }
+
+  async getBooking(id: string): Promise<Booking | undefined> {
+    const [booking] = await db.select().from(bookings).where(eq(bookings.id, id));
+    return booking;
+  }
+
+  async getBookingsByClient(clientId: string): Promise<Booking[]> {
+    return await db.select().from(bookings)
+      .where(eq(bookings.clientId, clientId))
+      .orderBy(desc(bookings.createdAt));
+  }
+
+  async getBookingsByBuddy(buddyId: string): Promise<Booking[]> {
+    return await db.select().from(bookings)
+      .where(eq(bookings.buddyId, buddyId))
+      .orderBy(desc(bookings.createdAt));
+  }
+
+  async updateBookingStatus(id: string, status: string): Promise<Booking | undefined> {
+    const [booking] = await db.update(bookings)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(bookings.id, id))
+      .returning();
+    return booking;
+  }
+
+  // Review methods
+  async createReview(review: InsertReview): Promise<Review> {
+    const [newReview] = await db.insert(reviews).values(review).returning();
+
+    // Update buddy's rating
+    const allReviews = await this.getReviewsForBuddy(review.buddyId);
+    const totalRating = allReviews.reduce((sum, r) => sum + r.rating, 0);
+    const avgRating = totalRating / allReviews.length;
+
+    await db.update(buddyProfiles)
+      .set({ 
+        ratingAverage: avgRating.toFixed(2),
+        ratingCount: allReviews.length 
+      })
+      .where(eq(buddyProfiles.userId, review.buddyId));
+
+    return newReview;
+  }
+
+  async getReviewsForBuddy(buddyId: string): Promise<Review[]> {
+    return await db.select().from(reviews)
+      .where(eq(reviews.buddyId, buddyId))
+      .orderBy(desc(reviews.createdAt));
+  }
 }
 
-export const storage = new MemStorage();
+export const storage = new DbStorage();
