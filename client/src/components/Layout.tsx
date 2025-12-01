@@ -36,10 +36,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex flex-col bg-background font-sans pb-16 md:pb-0">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="container mx-auto px-4 h-20 md:h-24 flex items-center justify-between">
           <Link href="/">
             <a className="flex items-center gap-2 group">
-              <img src={logoImage} alt="Rent-A-Buddy" className="h-12 w-auto object-contain" />
+              <img src={logoImage} alt="Rent-A-Buddy" className="h-16 md:h-20 w-auto object-contain" />
             </a>
           </Link>
 
@@ -102,8 +102,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
             <div className="md:col-span-2">
-              <div className="flex items-center gap-2 mb-4">
-                <img src={logoImage} alt="Rent-A-Buddy" className="h-10 w-auto object-contain" />
+              <div className="flex items-center gap-2 mb-6">
+                <img src={logoImage} alt="Rent-A-Buddy" className="h-24 w-auto object-contain" />
               </div>
               <p className="text-muted-foreground max-w-md leading-relaxed">
                 A safety-first community for non-romantic companionship. 
