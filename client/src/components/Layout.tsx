@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { ShieldCheck, HeartHandshake, Menu, X } from "lucide-react";
+import { ShieldCheck, HeartHandshake, Menu, X, Home, Search, User } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -20,8 +20,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     );
   };
 
+  const MobileNavItem = ({ href, icon: Icon, label }: { href: string, icon: any, label: string }) => {
+    const isActive = location === href;
+    return (
+      <Link href={href}>
+        <a className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${isActive ? "text-primary" : "text-muted-foreground"}`}>
+          <Icon className={`h-6 w-6 ${isActive ? "fill-current" : ""}`} />
+          <span className="text-[10px] font-medium">{label}</span>
+        </a>
+      </Link>
+    );
+  };
+
   return (
-    <div className="min-h-screen flex flex-col bg-background font-sans">
+    <div className="min-h-screen flex flex-col bg-background font-sans pb-16 md:pb-0">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -47,7 +59,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </Link>
           </div>
 
-          {/* Mobile Menu */}
+          {/* Mobile Menu Toggle (Optional - can keep for full menu access) */}
           <div className="md:hidden">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
@@ -55,18 +67,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <Menu className="h-6 w-6" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+              <SheetContent side="right" className="w-[300px]">
                 <nav className="flex flex-col gap-4 mt-8">
-                  <Link href="/" onClick={() => setIsOpen(false)} className="text-lg font-medium">Home</Link>
-                  <Link href="/buddies" onClick={() => setIsOpen(false)} className="text-lg font-medium">Browse Buddies</Link>
-                  <Link href="/policies" onClick={() => setIsOpen(false)} className="text-lg font-medium">Safety & Policies</Link>
-                  <hr className="my-4 border-border" />
                   <Link href="/login" onClick={() => setIsOpen(false)}>
                     <Button variant="outline" className="w-full justify-start">Log in</Button>
                   </Link>
                   <Link href="/register" onClick={() => setIsOpen(false)}>
                     <Button className="w-full justify-start">Sign up</Button>
                   </Link>
+                  <hr className="my-2 border-border" />
+                  <Link href="/policies" onClick={() => setIsOpen(false)} className="text-lg font-medium">Safety & Policies</Link>
                 </nav>
               </SheetContent>
             </Sheet>
@@ -79,8 +89,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {children}
       </main>
 
+      {/* Mobile Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 h-16 bg-white border-t border-border md:hidden flex items-center justify-around px-2 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+        <MobileNavItem href="/" icon={Home} label="Home" />
+        <MobileNavItem href="/buddies" icon={Search} label="Browse" />
+        <MobileNavItem href="/dashboard" icon={User} label="Dashboard" />
+        <MobileNavItem href="/policies" icon={ShieldCheck} label="Safety" />
+      </div>
+
       {/* Footer */}
-      <footer className="bg-muted/30 border-t border-border/50 py-12">
+      <footer className="bg-muted/30 border-t border-border/50 py-12 hidden md:block">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
             <div className="md:col-span-2">
