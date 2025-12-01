@@ -54,7 +54,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="container mx-auto px-4 h-20 md:h-24 flex items-center justify-between">
           <Link href="/">
             <a className="flex items-center gap-2 group">
-              <img src={logoImage} alt="Rent-A-Buddy" className="h-16 md:h-20 w-auto object-contain" />
+              <img src={logoImage} alt="Rent-A-Buddy" className="h-20 md:h-24 w-auto object-contain" />
             </a>
           </Link>
 
@@ -160,7 +160,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
             <div className="md:col-span-2">
               <div className="flex items-center gap-2 mb-6">
-                <img src={logoImage} alt="Rent-A-Buddy" className="h-24 w-auto object-contain" />
+                <img src={logoImage} alt="Rent-A-Buddy" className="h-32 w-auto object-contain" />
               </div>
               <p className="text-muted-foreground max-w-md leading-relaxed">
                 A safety-first community for non-romantic companionship. 
