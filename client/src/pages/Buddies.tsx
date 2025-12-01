@@ -5,14 +5,23 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Search, MapPin, Star, Filter } from "lucide-react";
-import { MOCK_BUDDIES } from "@/lib/mockData";
+import { Search, MapPin, Star, Filter, User } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 
 export default function Buddies() {
   const [priceRange, setPriceRange] = useState([100]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [searchCity, setSearchCity] = useState("");
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["buddies", { city: searchCity, maxRate: priceRange[0] }],
+    queryFn: () => api.getBuddies({ city: searchCity || undefined, maxRate: priceRange[0] }),
+  });
+
+  const buddies = data?.buddies || [];
 
   const FilterContent = () => (
     <div className="space-y-6">
@@ -102,65 +111,90 @@ export default function Buddies() {
 
         {/* Results Grid */}
         <div className="lg:col-span-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
-            {MOCK_BUDDIES.map((buddy) => (
-              <Card key={buddy.id} className="overflow-hidden hover:shadow-lg transition-shadow border-border/50 group">
-                <div className="aspect-[4/3] relative overflow-hidden">
-                  <img 
-                    src={buddy.image} 
-                    alt={buddy.name} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold shadow-sm">
-                    ${buddy.rate}/hr
-                  </div>
-                  {buddy.verified && (
-                    <div className="absolute bottom-3 left-3 bg-primary/90 backdrop-blur-sm text-primary-foreground px-2 py-1 rounded flex items-center gap-1 text-xs font-medium shadow-sm">
-                      <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                      Verified
+          {isLoading ? (
+            <div className="flex justify-center items-center py-12">
+              <p className="text-muted-foreground">Loading buddies...</p>
+            </div>
+          ) : buddies.length === 0 ? (
+            <div className="flex flex-col justify-center items-center py-12">
+              <p className="text-muted-foreground mb-4">No buddies found. Try adjusting your filters.</p>
+              <Button variant="outline" onClick={() => window.location.reload()}>
+                Refresh
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
+              {buddies.map((buddy: any) => (
+                <Card key={buddy.id} className="overflow-hidden hover:shadow-lg transition-shadow border-border/50 group" data-testid={`card-buddy-${buddy.id}`}>
+                  <div className="aspect-[4/3] relative overflow-hidden bg-muted">
+                    {buddy.profileImage ? (
+                      <img 
+                        src={buddy.profileImage} 
+                        alt={buddy.user.name} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-teal-100 to-coral-100">
+                        <User className="h-24 w-24 text-teal-600/30" />
+                      </div>
+                    )}
+                    <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold shadow-sm">
+                      ${buddy.hourlyRate || "N/A"}/hr
                     </div>
-                  )}
-                </div>
-                
-                <CardContent className="p-5">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-heading font-bold text-lg">{buddy.name}</h3>
-                    <div className="flex items-center gap-1 text-amber-500 text-sm font-bold">
-                      <Star className="h-3.5 w-3.5 fill-current" />
-                      <span>{buddy.rating}</span>
-                      <span className="text-muted-foreground font-normal text-xs">({buddy.reviews})</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-1 text-muted-foreground text-sm mb-4">
-                    <MapPin className="h-3.5 w-3.5" />
-                    {buddy.city}
-                  </div>
-                  
-                  <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
-                    {buddy.bio}
-                  </p>
-                  
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {buddy.tags.slice(0, 3).map(tag => (
-                      <Badge key={tag} variant="secondary" className="font-normal text-xs bg-secondary/10 text-secondary-foreground hover:bg-secondary/20">
-                        {tag}
-                      </Badge>
-                    ))}
-                    {buddy.tags.length > 3 && (
-                      <Badge variant="outline" className="text-xs text-muted-foreground">
-                        +{buddy.tags.length - 3}
-                      </Badge>
+                    {buddy.isCertified && (
+                      <div className="absolute bottom-3 left-3 bg-primary/90 backdrop-blur-sm text-primary-foreground px-2 py-1 rounded flex items-center gap-1 text-xs font-medium shadow-sm">
+                        <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
+                        Verified
+                      </div>
                     )}
                   </div>
-                </CardContent>
-                
-                <CardFooter className="p-5 pt-0">
-                  <Button className="w-full font-semibold rounded-xl">View Profile</Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
+                  
+                  <CardContent className="p-5">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-heading font-bold text-lg" data-testid={`text-buddy-name-${buddy.id}`}>
+                        {buddy.user.name}
+                      </h3>
+                      <div className="flex items-center gap-1 text-amber-500 text-sm font-bold">
+                        <Star className="h-3.5 w-3.5 fill-current" />
+                        <span>{buddy.ratingAverage || "5.0"}</span>
+                        <span className="text-muted-foreground font-normal text-xs">({buddy.ratingCount || 0})</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-1 text-muted-foreground text-sm mb-4">
+                      <MapPin className="h-3.5 w-3.5" />
+                      {buddy.city || "Location not specified"}
+                    </div>
+                    
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                      {buddy.bio || buddy.headline || "No bio available"}
+                    </p>
+                    
+                    {buddy.tags && buddy.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {buddy.tags.slice(0, 3).map((tag: string) => (
+                          <Badge key={tag} variant="secondary" className="font-normal text-xs bg-secondary/10 text-secondary-foreground hover:bg-secondary/20">
+                            {tag}
+                          </Badge>
+                        ))}
+                        {buddy.tags.length > 3 && (
+                          <Badge variant="outline" className="text-xs text-muted-foreground">
+                            +{buddy.tags.length - 3}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                  
+                  <CardFooter className="p-5 pt-0">
+                    <Button className="w-full font-semibold rounded-xl" data-testid={`button-view-profile-${buddy.id}`}>
+                      View Profile
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,13 +1,28 @@
 import { Link, useLocation } from "wouter";
-import { ShieldCheck, HeartHandshake, Menu, X, Home, Search, User } from "lucide-react";
+import { ShieldCheck, HeartHandshake, Menu, X, Home, Search, User, LogOut } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/hooks/useAuth";
 import logoImage from "@assets/logo_1764395893254.png";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const { user, logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    setLocation("/");
+  };
 
   const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
     const isActive = location === href;
@@ -51,12 +66,36 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </nav>
 
           <div className="hidden md:flex items-center gap-4">
-            <Link href="/login">
-              <Button variant="ghost" className="font-medium">Log in</Button>
-            </Link>
-            <Link href="/register">
-              <Button className="font-medium rounded-full px-6 shadow-lg shadow-primary/20">Sign up</Button>
-            </Link>
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="font-medium">
+                    <User className="h-4 w-4 mr-2" />
+                    {user.name}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setLocation("/dashboard")}>
+                    Dashboard
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Log out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <Link href="/login">
+                  <Button variant="ghost" className="font-medium">Log in</Button>
+                </Link>
+                <Link href="/register">
+                  <Button className="font-medium rounded-full px-6 shadow-lg shadow-primary/20">Sign up</Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Toggle (Optional - can keep for full menu access) */}
@@ -69,12 +108,30 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </SheetTrigger>
               <SheetContent side="right" className="w-[300px]">
                 <nav className="flex flex-col gap-4 mt-8">
-                  <Link href="/login" onClick={() => setIsOpen(false)}>
-                    <Button variant="outline" className="w-full justify-start">Log in</Button>
-                  </Link>
-                  <Link href="/register" onClick={() => setIsOpen(false)}>
-                    <Button className="w-full justify-start">Sign up</Button>
-                  </Link>
+                  {user ? (
+                    <>
+                      <div className="px-4 py-2 bg-muted rounded-lg">
+                        <p className="font-medium">{user.name}</p>
+                        <p className="text-sm text-muted-foreground">{user.email}</p>
+                      </div>
+                      <Link href="/dashboard" onClick={() => setIsOpen(false)}>
+                        <Button variant="outline" className="w-full justify-start">Dashboard</Button>
+                      </Link>
+                      <Button variant="outline" className="w-full justify-start" onClick={() => { handleLogout(); setIsOpen(false); }}>
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Log out
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Link href="/login" onClick={() => setIsOpen(false)}>
+                        <Button variant="outline" className="w-full justify-start">Log in</Button>
+                      </Link>
+                      <Link href="/register" onClick={() => setIsOpen(false)}>
+                        <Button className="w-full justify-start">Sign up</Button>
+                      </Link>
+                    </>
+                  )}
                   <hr className="my-2 border-border" />
                   <Link href="/policies" onClick={() => setIsOpen(false)} className="text-lg font-medium">Safety & Policies</Link>
                 </nav>
