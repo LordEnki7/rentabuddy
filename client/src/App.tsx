@@ -10,6 +10,8 @@ import Buddies from "@/pages/Buddies";
 import Register from "@/pages/Register";
 import Dashboard from "@/pages/Dashboard";
 
+import Policies from "@/pages/Policies";
+
 function Router() {
   return (
     <Layout>
@@ -19,12 +21,7 @@ function Router() {
         <Route path="/register" component={Register} />
         <Route path="/login" component={Register} /> {/* Reuse register for mock */}
         <Route path="/dashboard" component={Dashboard} />
-        <Route path="/policies" component={() => (
-          <div className="container mx-auto py-12 px-4">
-            <h1 className="text-3xl font-bold mb-4">Safety & Policies</h1>
-            <p>Static policy content goes here...</p>
-          </div>
-        )} />
+        <Route path="/policies" component={Policies} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
