@@ -105,6 +105,13 @@ export function ActiveCallModal({ isOpen, onClose, buddyName, buddyImage }: Acti
               <span className="text-xs text-white/50">Speaker</span>
             </div>
           </div>
+
+          {/* Safety Action */}
+          <div className="z-10 w-full px-8">
+            <Button variant="outline" className="w-full border-red-500/30 text-red-400 hover:bg-red-950/30 hover:text-red-300 transition-colors">
+              Report Safety Issue
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
