@@ -189,11 +189,9 @@ export default function Buddies() {
                   
                   <CardFooter className="p-5 pt-0">
                     <Link href={`/buddy/${buddy.userId}`}>
-                      <a className="w-full">
-                        <Button className="w-full font-semibold rounded-xl" data-testid={`button-view-profile-${buddy.id}`}>
-                          View Profile
-                        </Button>
-                      </a>
+                      <Button as="a" className="w-full font-semibold rounded-xl" data-testid={`button-view-profile-${buddy.id}`}>
+                        View Profile
+                      </Button>
                     </Link>
                   </CardFooter>
                 </Card>
