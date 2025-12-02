@@ -156,12 +156,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Footer */}
-      <footer className="bg-muted/30 border-t border-border/50 py-12 hidden md:block">
+      <footer className="bg-muted/30 border-t border-border/50 py-4 hidden md:block">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
             <div className="md:col-span-2">
-              <div className="flex items-center gap-2 mb-6">
-                <img src={logoImage} alt="Rent-A-Buddy" className="h-24 w-auto object-contain" />
+              <div className="flex items-center gap-2 mb-2">
+                <img src={logoImage} alt="Rent-A-Buddy" className="h-32 w-auto object-contain" />
               </div>
               <p className="text-muted-foreground max-w-md leading-relaxed">
                 A safety-first community for non-romantic companionship. 
@@ -186,7 +186,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           
-          <div className="pt-8 border-t border-border/50 flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="pt-2 border-t border-border/50 flex flex-col md:flex-row justify-between items-center gap-2">
             <p className="text-sm text-muted-foreground">© 2025 Rent-A-Buddy. All rights reserved.</p>
             <div className="px-4 py-2 bg-secondary/10 rounded-full border border-secondary/20">
               <p className="text-xs font-medium text-secondary-foreground flex items-center gap-2">
