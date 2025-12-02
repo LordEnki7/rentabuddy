@@ -54,7 +54,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="container mx-auto px-4 h-20 md:h-24 flex items-center justify-between">
           <Link href="/">
             <a className="flex items-center gap-2 group">
-              <img src={logoImage} alt="Rent-A-Buddy" className="h-16 md:h-20 w-auto object-contain" />
+              <img src={logoImage} alt="Rent-A-Buddy" className="h-20 md:h-24 w-auto object-contain" />
             </a>
           </Link>
 
