@@ -8,9 +8,11 @@ import NotFound from "@/pages/not-found";
 import Layout from "@/components/Layout";
 import Home from "@/pages/Home";
 import Buddies from "@/pages/Buddies";
+import BuddyDetail from "@/pages/BuddyDetail";
 import Register from "@/pages/Register";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
+import Messages from "@/pages/Messages";
 import Policies from "@/pages/Policies";
 
 function Router() {
@@ -19,9 +21,11 @@ function Router() {
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/buddies" component={Buddies} />
+        <Route path="/buddy/:userId" component={BuddyDetail} />
         <Route path="/register" component={Register} />
         <Route path="/login" component={Login} />
         <Route path="/dashboard" component={Dashboard} />
+        <Route path="/messages" component={Messages} />
         <Route path="/policies" component={Policies} />
         <Route component={NotFound} />
       </Switch>

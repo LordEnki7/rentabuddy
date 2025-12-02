@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/neon-serverless";
 import { Pool } from "@neondatabase/serverless";
-import { eq, and, like, or, desc } from "drizzle-orm";
+import { eq, and, like, or, desc, sql } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import {
   users,
@@ -8,6 +8,11 @@ import {
   buddyProfiles,
   bookings,
   reviews,
+  messages,
+  messageThreads,
+  availability,
+  safetyReports,
+  transactions,
   type User,
   type InsertUser,
   type ClientProfile,
@@ -18,6 +23,16 @@ import {
   type InsertBooking,
   type Review,
   type InsertReview,
+  type Message,
+  type InsertMessage,
+  type MessageThread,
+  type InsertMessageThread,
+  type Availability,
+  type InsertAvailability,
+  type SafetyReport,
+  type InsertSafetyReport,
+  type Transaction,
+  type InsertTransaction,
   type RegisterInput,
 } from "@shared/schema";
 
@@ -40,7 +55,7 @@ export interface IStorage {
   createBuddyProfile(profile: InsertBuddyProfile): Promise<BuddyProfile>;
   getBuddyProfile(userId: string): Promise<BuddyProfile | undefined>;
   updateBuddyProfile(userId: string, updates: Partial<InsertBuddyProfile>): Promise<BuddyProfile | undefined>;
-  getAllBuddies(filters?: { city?: string, maxRate?: number }): Promise<Array<BuddyProfile & { user: User }>>;
+  getAllBuddies(filters?: { city?: string, maxRate?: number, activities?: string[] }): Promise<Array<BuddyProfile & { user: User }>>;
 
   // Bookings
   createBooking(booking: InsertBooking): Promise<Booking>;
@@ -52,6 +67,25 @@ export interface IStorage {
   // Reviews
   createReview(review: InsertReview): Promise<Review>;
   getReviewsForBuddy(buddyId: string): Promise<Review[]>;
+
+  // Messages
+  getOrCreateMessageThread(clientId: string, buddyId: string): Promise<MessageThread>;
+  getMessageThreads(userId: string): Promise<MessageThread[]>;
+  getMessages(threadId: string): Promise<Message[]>;
+  createMessage(message: InsertMessage): Promise<Message>;
+
+  // Availability
+  getAvailability(buddyId: string): Promise<Availability[]>;
+  setAvailability(buddyId: string, dayOfWeek: number, startTime: string, endTime: string): Promise<Availability>;
+
+  // Safety Reports
+  createSafetyReport(report: InsertSafetyReport): Promise<SafetyReport>;
+  getSafetyReports(): Promise<SafetyReport[]>;
+
+  // Transactions
+  createTransaction(transaction: InsertTransaction): Promise<Transaction>;
+  getTransaction(id: string): Promise<Transaction | undefined>;
+  updateTransactionStatus(id: string, status: string): Promise<Transaction | undefined>;
 }
 
 export class DbStorage implements IStorage {
@@ -142,7 +176,7 @@ export class DbStorage implements IStorage {
     return profile;
   }
 
-  async getAllBuddies(filters?: { city?: string, maxRate?: number }): Promise<Array<BuddyProfile & { user: User }>> {
+  async getAllBuddies(filters?: { city?: string, maxRate?: number, activities?: string[] }): Promise<Array<BuddyProfile & { user: User }>> {
     let query = db.select({
       id: buddyProfiles.id,
       userId: buddyProfiles.userId,
@@ -152,10 +186,12 @@ export class DbStorage implements IStorage {
       hourlyRate: buddyProfiles.hourlyRate,
       experienceYears: buddyProfiles.experienceYears,
       languages: buddyProfiles.languages,
-      tags: buddyProfiles.tags,
+      activities: buddyProfiles.activities,
       ratingAverage: buddyProfiles.ratingAverage,
       ratingCount: buddyProfiles.ratingCount,
       isCertified: buddyProfiles.isCertified,
+      identityVerified: buddyProfiles.identityVerified,
+      backgroundCheckPassed: buddyProfiles.backgroundCheckPassed,
       codeOfConductAcceptedAt: buddyProfiles.codeOfConductAcceptedAt,
       safetyProtocolAcceptedAt: buddyProfiles.safetyProtocolAcceptedAt,
       profileImage: buddyProfiles.profileImage,
@@ -224,6 +260,117 @@ export class DbStorage implements IStorage {
     return await db.select().from(reviews)
       .where(eq(reviews.buddyId, buddyId))
       .orderBy(desc(reviews.createdAt));
+  }
+
+  // Message methods
+  async getOrCreateMessageThread(clientId: string, buddyId: string): Promise<MessageThread> {
+    const existing = await db.select().from(messageThreads)
+      .where(and(
+        eq(messageThreads.clientId, clientId),
+        eq(messageThreads.buddyId, buddyId)
+      ));
+
+    if (existing.length > 0) {
+      return existing[0];
+    }
+
+    const [newThread] = await db.insert(messageThreads).values({
+      clientId,
+      buddyId,
+    }).returning();
+
+    return newThread;
+  }
+
+  async getMessageThreads(userId: string): Promise<MessageThread[]> {
+    return await db.select().from(messageThreads)
+      .where(or(
+        eq(messageThreads.clientId, userId),
+        eq(messageThreads.buddyId, userId)
+      ))
+      .orderBy(desc(messageThreads.lastMessageAt));
+  }
+
+  async getMessages(threadId: string): Promise<Message[]> {
+    return await db.select().from(messages)
+      .where(eq(messages.threadId, threadId))
+      .orderBy(messages.createdAt);
+  }
+
+  async createMessage(message: InsertMessage): Promise<Message> {
+    const [newMessage] = await db.insert(messages).values(message).returning();
+
+    // Update thread's last message
+    await db.update(messageThreads)
+      .set({
+        lastMessage: newMessage.content,
+        lastMessageAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(messageThreads.id, newMessage.threadId));
+
+    return newMessage;
+  }
+
+  // Availability methods
+  async getAvailability(buddyId: string): Promise<Availability[]> {
+    return await db.select().from(availability)
+      .where(eq(availability.buddyId, buddyId));
+  }
+
+  async setAvailability(buddyId: string, dayOfWeek: number, startTime: string, endTime: string): Promise<Availability> {
+    const existing = await db.select().from(availability)
+      .where(and(
+        eq(availability.buddyId, buddyId),
+        eq(availability.dayOfWeek, dayOfWeek)
+      ));
+
+    if (existing.length > 0) {
+      const [updated] = await db.update(availability)
+        .set({ startTime, endTime })
+        .where(eq(availability.id, existing[0].id))
+        .returning();
+      return updated;
+    }
+
+    const [newAvail] = await db.insert(availability).values({
+      buddyId,
+      dayOfWeek,
+      startTime,
+      endTime,
+    }).returning();
+
+    return newAvail;
+  }
+
+  // Safety Report methods
+  async createSafetyReport(report: InsertSafetyReport): Promise<SafetyReport> {
+    const [newReport] = await db.insert(safetyReports).values(report).returning();
+    return newReport;
+  }
+
+  async getSafetyReports(): Promise<SafetyReport[]> {
+    return await db.select().from(safetyReports)
+      .orderBy(desc(safetyReports.createdAt));
+  }
+
+  // Transaction methods
+  async createTransaction(transaction: InsertTransaction): Promise<Transaction> {
+    const [newTransaction] = await db.insert(transactions).values(transaction).returning();
+    return newTransaction;
+  }
+
+  async getTransaction(id: string): Promise<Transaction | undefined> {
+    const [transaction] = await db.select().from(transactions).where(eq(transactions.id, id));
+    return transaction;
+  }
+
+  async updateTransactionStatus(id: string, status: string): Promise<Transaction | undefined> {
+    const [transaction] = await db.update(transactions)
+      .set({ status })
+      .where(eq(transactions.id, id))
+      .returning();
+    return transaction;
   }
 }
 

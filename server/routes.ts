@@ -180,11 +180,16 @@ export async function registerRoutes(
   // Get all buddies (public)
   app.get("/api/buddies", async (req, res) => {
     try {
-      const { city, maxRate } = req.query;
+      const { city, maxRate, activities } = req.query;
       const filters: any = {};
       
       if (city) filters.city = city as string;
       if (maxRate) filters.maxRate = parseFloat(maxRate as string);
+      if (activities) {
+        filters.activities = Array.isArray(activities)
+          ? activities
+          : [activities];
+      }
 
       const buddies = await storage.getAllBuddies(filters);
       res.json({ buddies });
@@ -252,6 +257,20 @@ export async function registerRoutes(
     }
   });
 
+  // Get single booking
+  app.get("/api/bookings/:id", requireAuth, async (req, res) => {
+    try {
+      const booking = await storage.getBooking(req.params.id);
+      if (!booking) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+      res.json({ booking });
+    } catch (error: any) {
+      console.error("Get booking error:", error);
+      res.status(500).json({ error: "Failed to get booking" });
+    }
+  });
+
   // Update booking status (for buddies)
   app.patch("/api/bookings/:id/status", requireAuth, requireRole('BUDDY'), async (req, res) => {
     try {
@@ -279,6 +298,147 @@ export async function registerRoutes(
     } catch (error: any) {
       console.error("Create review error:", error);
       res.status(500).json({ error: "Failed to create review" });
+    }
+  });
+
+  // ========== MESSAGE ROUTES ==========
+
+  // Get message threads
+  app.get("/api/messages/threads", requireAuth, async (req, res) => {
+    try {
+      const threads = await storage.getMessageThreads(req.session.userId!);
+      res.json({ threads });
+    } catch (error: any) {
+      console.error("Get message threads error:", error);
+      res.status(500).json({ error: "Failed to get message threads" });
+    }
+  });
+
+  // Get messages in thread
+  app.get("/api/messages/threads/:threadId", requireAuth, async (req, res) => {
+    try {
+      const messages = await storage.getMessages(req.params.threadId);
+      res.json({ messages });
+    } catch (error: any) {
+      console.error("Get messages error:", error);
+      res.status(500).json({ error: "Failed to get messages" });
+    }
+  });
+
+  // Create or get message thread
+  app.post("/api/messages/thread", requireAuth, async (req, res) => {
+    try {
+      const { buddyId } = req.body;
+      const thread = await storage.getOrCreateMessageThread(req.session.userId!, buddyId);
+      res.json({ thread });
+    } catch (error: any) {
+      console.error("Create thread error:", error);
+      res.status(500).json({ error: "Failed to create thread" });
+    }
+  });
+
+  // Send message
+  app.post("/api/messages", requireAuth, async (req, res) => {
+    try {
+      const { threadId, content } = req.body;
+      const message = await storage.createMessage({
+        threadId,
+        senderId: req.session.userId!,
+        content,
+      });
+      res.json({ message });
+    } catch (error: any) {
+      console.error("Create message error:", error);
+      res.status(500).json({ error: "Failed to send message" });
+    }
+  });
+
+  // ========== AVAILABILITY ROUTES ==========
+
+  // Get buddy availability
+  app.get("/api/availability/:buddyId", async (req, res) => {
+    try {
+      const availability = await storage.getAvailability(req.params.buddyId);
+      res.json({ availability });
+    } catch (error: any) {
+      console.error("Get availability error:", error);
+      res.status(500).json({ error: "Failed to get availability" });
+    }
+  });
+
+  // Set availability (buddies only)
+  app.post("/api/availability", requireAuth, requireRole('BUDDY'), async (req, res) => {
+    try {
+      const { dayOfWeek, startTime, endTime } = req.body;
+      const availability = await storage.setAvailability(
+        req.session.userId!,
+        dayOfWeek,
+        startTime,
+        endTime
+      );
+      res.json({ availability });
+    } catch (error: any) {
+      console.error("Set availability error:", error);
+      res.status(500).json({ error: "Failed to set availability" });
+    }
+  });
+
+  // ========== SAFETY REPORT ROUTES ==========
+
+  // Create safety report
+  app.post("/api/safety-reports", requireAuth, async (req, res) => {
+    try {
+      const reportData = {
+        ...req.body,
+        reporterId: req.session.userId!,
+      };
+      const report = await storage.createSafetyReport(reportData);
+      res.json({ report });
+    } catch (error: any) {
+      console.error("Create safety report error:", error);
+      res.status(500).json({ error: "Failed to create report" });
+    }
+  });
+
+  // Get safety reports (admin only)
+  app.get("/api/safety-reports", requireAuth, requireRole('ADMIN'), async (req, res) => {
+    try {
+      const reports = await storage.getSafetyReports();
+      res.json({ reports });
+    } catch (error: any) {
+      console.error("Get safety reports error:", error);
+      res.status(500).json({ error: "Failed to get reports" });
+    }
+  });
+
+  // ========== TRANSACTION ROUTES ==========
+
+  // Create transaction
+  app.post("/api/transactions", requireAuth, requireRole('CLIENT'), async (req, res) => {
+    try {
+      const { bookingId, amount } = req.body;
+      const transaction = await storage.createTransaction({
+        bookingId,
+        amount,
+      });
+      res.json({ transaction });
+    } catch (error: any) {
+      console.error("Create transaction error:", error);
+      res.status(500).json({ error: "Failed to create transaction" });
+    }
+  });
+
+  // Get transaction
+  app.get("/api/transactions/:id", requireAuth, async (req, res) => {
+    try {
+      const transaction = await storage.getTransaction(req.params.id);
+      if (!transaction) {
+        return res.status(404).json({ error: "Transaction not found" });
+      }
+      res.json({ transaction });
+    } catch (error: any) {
+      console.error("Get transaction error:", error);
+      res.status(500).json({ error: "Failed to get transaction" });
     }
   });
 

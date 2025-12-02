@@ -63,10 +63,11 @@ export const api = {
     }),
 
   // Buddies
-  getBuddies: (filters?: { city?: string; maxRate?: number }) => {
+  getBuddies: (filters?: { city?: string; maxRate?: number; activities?: string[] }) => {
     const params = new URLSearchParams();
     if (filters?.city) params.append("city", filters.city);
     if (filters?.maxRate) params.append("maxRate", filters.maxRate.toString());
+    if (filters?.activities) filters.activities.forEach(a => params.append("activities", a));
     const query = params.toString();
     return fetchAPI(`/buddies${query ? `?${query}` : ""}`);
   },
@@ -82,6 +83,8 @@ export const api = {
 
   getBookings: () => fetchAPI("/bookings"),
 
+  getBooking: (id: string) => fetchAPI(`/bookings/${id}`),
+
   updateBookingStatus: (id: string, status: string) =>
     fetchAPI(`/bookings/${id}/status`, {
       method: "PATCH",
@@ -94,4 +97,48 @@ export const api = {
       method: "POST",
       body: JSON.stringify(review),
     }),
+
+  // Messages
+  getMessageThreads: () => fetchAPI("/messages/threads"),
+
+  getMessages: (threadId: string) => fetchAPI(`/messages/threads/${threadId}`),
+
+  createMessage: (threadId: string, content: string) =>
+    fetchAPI("/messages", {
+      method: "POST",
+      body: JSON.stringify({ threadId, content }),
+    }),
+
+  getOrCreateThread: (buddyId: string) =>
+    fetchAPI("/messages/thread", {
+      method: "POST",
+      body: JSON.stringify({ buddyId }),
+    }),
+
+  // Availability
+  getAvailability: (buddyId: string) => fetchAPI(`/availability/${buddyId}`),
+
+  setAvailability: (dayOfWeek: number, startTime: string, endTime: string) =>
+    fetchAPI("/availability", {
+      method: "POST",
+      body: JSON.stringify({ dayOfWeek, startTime, endTime }),
+    }),
+
+  // Safety Reports
+  createSafetyReport: (report: any) =>
+    fetchAPI("/safety-reports", {
+      method: "POST",
+      body: JSON.stringify(report),
+    }),
+
+  getSafetyReports: () => fetchAPI("/safety-reports"),
+
+  // Transactions
+  createTransaction: (bookingId: string, amount: number) =>
+    fetchAPI("/transactions", {
+      method: "POST",
+      body: JSON.stringify({ bookingId, amount }),
+    }),
+
+  getTransaction: (id: string) => fetchAPI(`/transactions/${id}`),
 };
