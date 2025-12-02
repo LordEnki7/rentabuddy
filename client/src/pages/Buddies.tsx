@@ -10,9 +10,10 @@ import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { Link } from "wouter";
+import { useLocation } from "wouter";
 
 export default function Buddies() {
+  const [, setLocation] = useLocation();
   const [priceRange, setPriceRange] = useState([100]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [searchCity, setSearchCity] = useState("");
@@ -188,11 +189,13 @@ export default function Buddies() {
                   </CardContent>
                   
                   <CardFooter className="p-5 pt-0">
-                    <Link href={`/buddy/${buddy.userId}`}>
-                      <Button as="a" className="w-full font-semibold rounded-xl" data-testid={`button-view-profile-${buddy.id}`}>
-                        View Profile
-                      </Button>
-                    </Link>
+                    <Button 
+                      onClick={() => setLocation(`/buddy/${buddy.userId}`)}
+                      className="w-full font-semibold rounded-xl" 
+                      data-testid={`button-view-profile-${buddy.id}`}
+                    >
+                      View Profile
+                    </Button>
                   </CardFooter>
                 </Card>
               ))}
