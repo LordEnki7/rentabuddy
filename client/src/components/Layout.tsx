@@ -51,7 +51,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex flex-col bg-background font-sans pb-16 md:pb-0">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md">
-        <div className="container mx-auto px-4 h-20 md:h-24 flex items-center justify-between">
+        <div className="container mx-auto px-4 h-24 md:h-28 flex items-center justify-between">
           <Link href="/">
             <a className="flex items-center gap-2 group">
               <img src={logoImage} alt="Rent-A-Buddy" className="h-20 md:h-24 w-auto object-contain" />
