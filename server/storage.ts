@@ -170,40 +170,23 @@ export class DbStorage implements IStorage {
 
   async updateBuddyProfile(userId: string, updates: Partial<InsertBuddyProfile>): Promise<BuddyProfile | undefined> {
     const [profile] = await db.update(buddyProfiles)
-      .set({ ...updates, updatedAt: new Date() })
+      .set({ 
+        ...updates, 
+        updatedAt: new Date() 
+      } as any)
       .where(eq(buddyProfiles.userId, userId))
       .returning();
     return profile;
   }
 
   async getAllBuddies(filters?: { city?: string, maxRate?: number, activities?: string[] }): Promise<Array<BuddyProfile & { user: User }>> {
-    let query = db.select({
-      id: buddyProfiles.id,
-      userId: buddyProfiles.userId,
-      headline: buddyProfiles.headline,
-      bio: buddyProfiles.bio,
-      city: buddyProfiles.city,
-      hourlyRate: buddyProfiles.hourlyRate,
-      experienceYears: buddyProfiles.experienceYears,
-      languages: buddyProfiles.languages,
-      activities: buddyProfiles.activities,
-      ratingAverage: buddyProfiles.ratingAverage,
-      ratingCount: buddyProfiles.ratingCount,
-      isCertified: buddyProfiles.isCertified,
-      identityVerified: buddyProfiles.identityVerified,
-      backgroundCheckPassed: buddyProfiles.backgroundCheckPassed,
-      codeOfConductAcceptedAt: buddyProfiles.codeOfConductAcceptedAt,
-      safetyProtocolAcceptedAt: buddyProfiles.safetyProtocolAcceptedAt,
-      profileImage: buddyProfiles.profileImage,
-      createdAt: buddyProfiles.createdAt,
-      updatedAt: buddyProfiles.updatedAt,
-      user: users,
-    })
+    let baseQuery = db.select()
       .from(buddyProfiles)
       .innerJoin(users, eq(users.id, buddyProfiles.userId))
-      .where(eq(users.status, 'ACTIVE'));
+      .where(eq(users.status, 'ACTIVE')) as any;
 
-    return await query as any;
+    const result = await baseQuery;
+    return result.map((r: any) => ({ ...r.buddy_profiles, user: r.users }));
   }
 
   // Booking methods

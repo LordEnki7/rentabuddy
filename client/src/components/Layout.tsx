@@ -62,6 +62,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <nav className="hidden md:flex items-center gap-8">
             <NavLink href="/">Home</NavLink>
             <NavLink href="/buddies">Browse Buddies</NavLink>
+            {user && <NavLink href="/messages">Messages</NavLink>}
             <NavLink href="/policies">Safety & Policies</NavLink>
           </nav>
 

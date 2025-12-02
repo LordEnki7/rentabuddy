@@ -10,6 +10,7 @@ import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { Link } from "wouter";
 
 export default function Buddies() {
   const [priceRange, setPriceRange] = useState([100]);
@@ -187,9 +188,13 @@ export default function Buddies() {
                   </CardContent>
                   
                   <CardFooter className="p-5 pt-0">
-                    <Button className="w-full font-semibold rounded-xl" data-testid={`button-view-profile-${buddy.id}`}>
-                      View Profile
-                    </Button>
+                    <Link href={`/buddy/${buddy.userId}`}>
+                      <a className="w-full">
+                        <Button className="w-full font-semibold rounded-xl" data-testid={`button-view-profile-${buddy.id}`}>
+                          View Profile
+                        </Button>
+                      </a>
+                    </Link>
                   </CardFooter>
                 </Card>
               ))}

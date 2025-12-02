@@ -8,9 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Shield, Star, MapPin, MessageCircle, CheckCircle, AlertCircle } from "lucide-react";
+import { Shield, Star, MapPin, MessageCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 
 export default function BuddyDetail() {
   const [, params] = useRoute("/buddy/:userId");
