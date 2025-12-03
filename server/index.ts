@@ -1,5 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
+import PgSession from "connect-pg-simple";
+import { Pool } from "pg";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
@@ -13,9 +15,20 @@ declare module "http" {
   }
 }
 
+// Create session pool - separate from ORM pool
+const sessionPool = new Pool({
+  connectionString: process.env.DATABASE_URL!,
+});
+
+const PgSessionStore = PgSession(session);
+
 // Session configuration
 app.use(
   session({
+    store: new PgSessionStore({
+      pool: sessionPool,
+      createTableIfMissing: true,
+    }),
     secret: process.env.SESSION_SECRET || "rent-a-buddy-secret-key-change-in-production",
     resave: false,
     saveUninitialized: false,
