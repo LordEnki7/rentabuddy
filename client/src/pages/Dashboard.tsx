@@ -5,16 +5,20 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
-import { CalendarDays, MessageSquare, Clock, MapPin, Phone, DollarSign, TrendingUp } from "lucide-react";
-import { useState } from "react";
+import { CalendarDays, MessageSquare, Clock, MapPin, DollarSign, TrendingUp, Camera, Loader2 } from "lucide-react";
+import { useState, useRef } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, profile, refetch } = useAuth();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const { data: bookingsData } = useQuery({
     queryKey: ["bookings"],
@@ -30,6 +34,58 @@ export default function Dashboard() {
 
   const bookings = bookingsData?.bookings || [];
   const threads = threadsData?.threads || [];
+  
+  const profileImage = (profile as any)?.profileImage;
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast({
+        variant: "destructive",
+        title: "Invalid file",
+        description: "Please select an image file.",
+      });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        variant: "destructive",
+        title: "File too large",
+        description: "Image must be less than 5MB.",
+      });
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64 = reader.result as string;
+        if (user?.role === "BUDDY") {
+          await api.updateBuddyProfile({ profileImage: base64 });
+        } else {
+          await api.updateClientProfile({ profileImage: base64 });
+        }
+        await refetch();
+        toast({
+          title: "Profile updated!",
+          description: "Your profile image has been updated.",
+        });
+        setUploadingImage(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Upload failed",
+        description: "Failed to update profile image.",
+      });
+      setUploadingImage(false);
+    }
+  };
 
   if (!user) {
     return (
@@ -49,13 +105,39 @@ export default function Dashboard() {
 
   return (
     <div className="container mx-auto px-4 py-8 mb-16 md:mb-0">
+      {/* Hidden file input for image upload */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        className="hidden"
+        accept="image/*"
+        onChange={handleImageUpload}
+        data-testid="input-profile-image"
+      />
+
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
-          <Avatar className="h-16 w-16 border-2 border-white shadow-md">
-            <AvatarImage src="https://i.pravatar.cc/150?u={user.id}" />
-            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-          </Avatar>
+          <div className="relative group">
+            <Avatar className="h-16 w-16 border-2 border-white shadow-md">
+              <AvatarImage src={profileImage || undefined} />
+              <AvatarFallback className="text-xl bg-primary/10 text-primary">
+                {user.name.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingImage}
+              className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+              data-testid="button-upload-image"
+            >
+              {uploadingImage ? (
+                <Loader2 className="h-6 w-6 text-white animate-spin" />
+              ) : (
+                <Camera className="h-6 w-6 text-white" />
+              )}
+            </button>
+          </div>
           <div>
             <h1 className="text-2xl font-heading font-bold" data-testid="heading-dashboard">
               Welcome back, {user.name}!
@@ -278,6 +360,46 @@ export default function Dashboard() {
               <CardDescription>Manage your account preferences</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* Profile Image Section */}
+              <div className="space-y-4">
+                <Label>Profile Photo</Label>
+                <div className="flex items-center gap-6">
+                  <div className="relative group">
+                    <Avatar className="h-24 w-24 border-2 border-muted">
+                      <AvatarImage src={profileImage || undefined} />
+                      <AvatarFallback className="text-2xl bg-primary/10 text-primary">
+                        {user?.name.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingImage}
+                      className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      data-testid="button-settings-upload-image"
+                    >
+                      {uploadingImage ? (
+                        <Loader2 className="h-8 w-8 text-white animate-spin" />
+                      ) : (
+                        <Camera className="h-8 w-8 text-white" />
+                      )}
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingImage}
+                      data-testid="button-change-photo"
+                    >
+                      {uploadingImage ? "Uploading..." : "Change Photo"}
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      JPG, PNG or GIF. Max 5MB.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
                 <Input id="name" placeholder="Your name" defaultValue={user?.name} data-testid="input-name" />

@@ -19,6 +19,7 @@ export const clientProfiles = pgTable("client_profiles", {
   userId: varchar("user_id").notNull().references(() => users.id),
   city: text("city"),
   shortBio: text("short_bio"),
+  profileImage: text("profile_image"),
   safetyAgreementAcceptedAt: timestamp("safety_agreement_accepted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
