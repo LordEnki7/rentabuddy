@@ -53,17 +53,23 @@ export async function registerRoutes(
       // Create user
       const user = await storage.createUser(input);
 
-      // Set session
+      // Set session and save explicitly
       req.session.userId = user.id;
       req.session.role = user.role;
-
-      res.json({
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        },
+      
+      req.session.save((err) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ error: "Session error" });
+        }
+        res.json({
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+          },
+        });
       });
     } catch (error: any) {
       console.error("Registration error:", error);
@@ -89,17 +95,23 @@ export async function registerRoutes(
         return res.status(401).json({ error: "Invalid credentials" });
       }
 
-      // Set session
+      // Set session and save explicitly
       req.session.userId = user.id;
       req.session.role = user.role;
-
-      res.json({
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        },
+      
+      req.session.save((err) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ error: "Session error" });
+        }
+        res.json({
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+          },
+        });
       });
     } catch (error: any) {
       console.error("Login error:", error);
