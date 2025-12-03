@@ -14,6 +14,7 @@ import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
 import Messages from "@/pages/Messages";
 import Policies from "@/pages/Policies";
+import BuddyOnboarding from "@/pages/BuddyOnboarding";
 
 function Router() {
   return (
@@ -27,6 +28,7 @@ function Router() {
         <Route path="/dashboard" component={Dashboard} />
         <Route path="/messages" component={Messages} />
         <Route path="/policies" component={Policies} />
+        <Route path="/buddy-onboarding" component={BuddyOnboarding} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

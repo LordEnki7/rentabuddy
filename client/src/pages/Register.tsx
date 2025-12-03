@@ -79,9 +79,9 @@ export default function Register() {
       
       toast({
         title: "Welcome to Rent-A-Buddy!",
-        description: "Your buddy account has been created successfully.",
+        description: "Let's complete your buddy profile.",
       });
-      setLocation("/dashboard");
+      setLocation("/buddy-onboarding");
     } catch (error: any) {
       toast({
         variant: "destructive",

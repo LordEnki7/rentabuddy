@@ -87,10 +87,22 @@ export default function Dashboard() {
     }
   };
 
+  const isBuddyProfileIncomplete = user?.role === "BUDDY" && profile && 
+    (!(profile as any).headline || !(profile as any).bio || !(profile as any).hourlyRate);
+
   if (!user) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
         <p className="text-muted-foreground">Please log in to view your dashboard</p>
+      </div>
+    );
+  }
+
+  if (isBuddyProfileIncomplete) {
+    window.location.href = "/buddy-onboarding";
+    return (
+      <div className="container mx-auto px-4 py-12 text-center">
+        <p className="text-muted-foreground">Redirecting to complete your profile...</p>
       </div>
     );
   }
