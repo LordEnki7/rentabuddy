@@ -293,7 +293,7 @@ export default function Register() {
         </Tabs>
         
         <p className="text-center mt-6 text-sm text-muted-foreground">
-          Already have an account? <Link href="/login"><a className="text-primary hover:underline" data-testid="link-login">Log in</a></Link>
+          Already have an account? <Link href="/login"><span className="text-primary hover:underline cursor-pointer" data-testid="link-login">Log in</span></Link>
         </p>
       </div>
     </div>

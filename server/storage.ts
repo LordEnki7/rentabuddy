@@ -1,5 +1,5 @@
-import { drizzle } from "drizzle-orm/neon-serverless";
-import { Pool } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 import { eq, and, like, or, desc, sql } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import {
