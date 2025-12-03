@@ -171,17 +171,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <div>
               <h4 className="font-heading font-semibold mb-4 text-foreground">Platform</h4>
               <ul className="space-y-2">
-                <li><Link href="/buddies"><a className="text-muted-foreground hover:text-primary transition-colors">Find a Buddy</a></Link></li>
-                <li><Link href="/register"><a className="text-muted-foreground hover:text-primary transition-colors">Become a Buddy</a></Link></li>
-                <li><Link href="/login"><a className="text-muted-foreground hover:text-primary transition-colors">Log In</a></Link></li>
+                <li><Link href="/buddies"><span className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">Find a Buddy</span></Link></li>
+                <li><Link href="/register"><span className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">Become a Buddy</span></Link></li>
+                <li><Link href="/login"><span className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">Log In</span></Link></li>
               </ul>
             </div>
             <div>
               <h4 className="font-heading font-semibold mb-4 text-foreground">Legal & Safety</h4>
               <ul className="space-y-2">
-                <li><Link href="/policies"><a className="text-muted-foreground hover:text-primary transition-colors">Safety Protocols</a></Link></li>
-                <li><Link href="/policies"><a className="text-muted-foreground hover:text-primary transition-colors">Code of Conduct</a></Link></li>
-                <li><Link href="/policies"><a className="text-muted-foreground hover:text-primary transition-colors">Terms of Service</a></Link></li>
+                <li><Link href="/policies"><span className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">Safety Protocols</span></Link></li>
+                <li><Link href="/policies"><span className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">Code of Conduct</span></Link></li>
+                <li><Link href="/policies"><span className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">Terms of Service</span></Link></li>
               </ul>
             </div>
           </div>
