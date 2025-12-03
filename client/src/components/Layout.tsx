@@ -28,9 +28,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     const isActive = location === href;
     return (
       <Link href={href}>
-        <a className={`text-sm font-medium transition-colors hover:text-primary ${isActive ? "text-primary font-bold" : "text-muted-foreground"}`}>
+        <span className={`text-sm font-medium transition-colors hover:text-primary cursor-pointer ${isActive ? "text-primary font-bold" : "text-muted-foreground"}`}>
           {children}
-        </a>
+        </span>
       </Link>
     );
   };
@@ -39,10 +39,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     const isActive = location === href;
     return (
       <Link href={href}>
-        <a className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${isActive ? "text-primary" : "text-muted-foreground"}`}>
+        <span className={`flex flex-col items-center justify-center w-full h-full space-y-1 cursor-pointer ${isActive ? "text-primary" : "text-muted-foreground"}`}>
           <Icon className={`h-6 w-6 ${isActive ? "fill-current" : ""}`} />
           <span className="text-[10px] font-medium">{label}</span>
-        </a>
+        </span>
       </Link>
     );
   };
@@ -53,9 +53,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md">
         <div className="container mx-auto px-4 h-24 md:h-28 flex items-center justify-between">
           <Link href="/">
-            <a className="flex items-center gap-2 group">
+            <span className="flex items-center gap-2 group cursor-pointer">
               <img src={logoImage} alt="Rent-A-Buddy" className="h-20 md:h-24 w-auto object-contain" />
-            </a>
+            </span>
           </Link>
 
           {/* Desktop Nav */}
