@@ -47,13 +47,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     const data = await api.login({ email, password });
     setUser(data.user);
-    await refetch();
+    setLoading(false);
+    // Try to fetch profile, but don't clear user if it fails
+    try {
+      const userData = await api.getCurrentUser();
+      setProfile(userData.profile);
+    } catch (e) {
+      // Profile fetch may fail initially, that's ok
+    }
   };
 
   const register = async (data: any) => {
     const result = await api.register(data);
     setUser(result.user);
-    await refetch();
+    setLoading(false);
+    // Try to fetch profile, but don't clear user if it fails
+    try {
+      const userData = await api.getCurrentUser();
+      setProfile(userData.profile);
+    } catch (e) {
+      // Profile fetch may fail initially, that's ok
+    }
   };
 
   const logout = async () => {
