@@ -482,5 +482,86 @@ export async function registerRoutes(
     }
   });
 
+  // ========== ADMIN ROUTES ==========
+
+  // Admin dashboard stats
+  app.get("/api/admin/stats", requireAuth, requireRole('ADMIN'), async (req, res) => {
+    try {
+      const stats = await storage.getAdminStats();
+      res.json({ stats });
+    } catch (error: any) {
+      console.error("Get admin stats error:", error);
+      res.status(500).json({ error: "Failed to get stats" });
+    }
+  });
+
+  // Get all users (admin)
+  app.get("/api/admin/users", requireAuth, requireRole('ADMIN'), async (req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json({ users: users.map(u => ({ ...u, passwordHash: undefined })) });
+    } catch (error: any) {
+      console.error("Get all users error:", error);
+      res.status(500).json({ error: "Failed to get users" });
+    }
+  });
+
+  // Update user status (suspend/activate)
+  app.patch("/api/admin/users/:id/status", requireAuth, requireRole('ADMIN'), async (req, res) => {
+    try {
+      const { status } = req.body;
+      if (!['ACTIVE', 'SUSPENDED'].includes(status)) {
+        return res.status(400).json({ error: "Invalid status" });
+      }
+      const user = await storage.updateUserStatus(req.params.id, status);
+      if (!user) return res.status(404).json({ error: "User not found" });
+      res.json({ user: { ...user, passwordHash: undefined } });
+    } catch (error: any) {
+      console.error("Update user status error:", error);
+      res.status(500).json({ error: "Failed to update user status" });
+    }
+  });
+
+  // Update buddy verification
+  app.patch("/api/admin/buddies/:userId/verify", requireAuth, requireRole('ADMIN'), async (req, res) => {
+    try {
+      const { field, value } = req.body;
+      const profile = await storage.updateBuddyVerification(req.params.userId, field, value);
+      if (!profile) return res.status(404).json({ error: "Profile not found" });
+      res.json({ profile });
+    } catch (error: any) {
+      console.error("Update buddy verification error:", error);
+      res.status(500).json({ error: "Failed to update verification" });
+    }
+  });
+
+  // Get all bookings (admin)
+  app.get("/api/admin/bookings", requireAuth, requireRole('ADMIN'), async (req, res) => {
+    try {
+      const bookings = await storage.getAllBookings();
+      res.json({ bookings });
+    } catch (error: any) {
+      console.error("Get all bookings error:", error);
+      res.status(500).json({ error: "Failed to get bookings" });
+    }
+  });
+
+  // Update safety report status (admin)
+  app.patch("/api/admin/safety-reports/:id/status", requireAuth, requireRole('ADMIN'), async (req, res) => {
+    try {
+      const { status } = req.body;
+      if (!['OPEN', 'INVESTIGATING', 'RESOLVED'].includes(status)) {
+        return res.status(400).json({ error: "Invalid status" });
+      }
+      const resolvedAt = status === 'RESOLVED' ? new Date() : undefined;
+      const report = await storage.updateSafetyReportStatus(req.params.id, status, resolvedAt);
+      if (!report) return res.status(404).json({ error: "Report not found" });
+      res.json({ report });
+    } catch (error: any) {
+      console.error("Update safety report status error:", error);
+      res.status(500).json({ error: "Failed to update report" });
+    }
+  });
+
   return httpServer;
 }

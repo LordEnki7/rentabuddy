@@ -82,11 +82,19 @@ export interface IStorage {
   createSafetyReport(report: InsertSafetyReport): Promise<SafetyReport>;
   getSafetyReports(): Promise<SafetyReport[]>;
   getSafetyReportsByUser(userId: string): Promise<SafetyReport[]>;
+  updateSafetyReportStatus(id: string, status: string, resolvedAt?: Date): Promise<SafetyReport | undefined>;
 
   // Transactions
   createTransaction(transaction: InsertTransaction): Promise<Transaction>;
   getTransaction(id: string): Promise<Transaction | undefined>;
   updateTransactionStatus(id: string, status: string): Promise<Transaction | undefined>;
+
+  // Admin
+  getAllUsers(): Promise<User[]>;
+  getAllBookings(): Promise<Booking[]>;
+  updateUserStatus(id: string, status: string): Promise<User | undefined>;
+  updateBuddyVerification(userId: string, field: string, value: boolean): Promise<BuddyProfile | undefined>;
+  getAdminStats(): Promise<{ totalUsers: number; totalBuddies: number; totalClients: number; totalBookings: number; totalCompleted: number; totalRevenue: number; openReports: number }>;
 }
 
 export class DbStorage implements IStorage {
@@ -379,6 +387,16 @@ export class DbStorage implements IStorage {
       .orderBy(desc(safetyReports.createdAt));
   }
 
+  async updateSafetyReportStatus(id: string, status: string, resolvedAt?: Date): Promise<SafetyReport | undefined> {
+    const updates: any = { status };
+    if (resolvedAt) updates.resolvedAt = resolvedAt;
+    const [report] = await db.update(safetyReports)
+      .set(updates)
+      .where(eq(safetyReports.id, id))
+      .returning();
+    return report;
+  }
+
   // Transaction methods
   async createTransaction(transaction: InsertTransaction): Promise<Transaction> {
     const [newTransaction] = await db.insert(transactions).values(transaction).returning();
@@ -396,6 +414,73 @@ export class DbStorage implements IStorage {
       .where(eq(transactions.id, id))
       .returning();
     return transaction;
+  }
+
+  // Admin methods
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async getAllBookings(): Promise<Booking[]> {
+    return await db.select().from(bookings).orderBy(desc(bookings.createdAt));
+  }
+
+  async updateUserStatus(id: string, status: string): Promise<User | undefined> {
+    const [user] = await db.update(users)
+      .set({ status })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async updateBuddyVerification(userId: string, field: string, value: boolean): Promise<BuddyProfile | undefined> {
+    const updateData: any = {};
+    if (field === 'identityVerified') updateData.identityVerified = value;
+    else if (field === 'backgroundCheckPassed') updateData.backgroundCheckPassed = value;
+    else if (field === 'isCertified') updateData.isCertified = value;
+    else return undefined;
+
+    const [profile] = await db.update(buddyProfiles)
+      .set(updateData)
+      .where(eq(buddyProfiles.userId, userId))
+      .returning();
+    return profile;
+  }
+
+  async getAdminStats(): Promise<{ totalUsers: number; totalBuddies: number; totalClients: number; totalBookings: number; totalCompleted: number; totalRevenue: number; openReports: number }> {
+    const allUsers = await db.select().from(users);
+    const allBookings = await db.select().from(bookings);
+    const openReportsResult = await db.select().from(safetyReports).where(eq(safetyReports.status, 'OPEN'));
+    const completedBookings = allBookings.filter(b => b.status === 'COMPLETED');
+    const totalRevenue = completedBookings.reduce((sum, b) => sum + parseFloat(String(b.totalPrice || '0')), 0);
+
+    return {
+      totalUsers: allUsers.filter(u => u.role !== 'ADMIN').length,
+      totalBuddies: allUsers.filter(u => u.role === 'BUDDY').length,
+      totalClients: allUsers.filter(u => u.role === 'CLIENT').length,
+      totalBookings: allBookings.length,
+      totalCompleted: completedBookings.length,
+      totalRevenue,
+      openReports: openReportsResult.length,
+    };
+  }
+
+  async seedAdminUser(): Promise<void> {
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@rentabuddy.com';
+    const adminPassword = process.env.ADMIN_PASSWORD || 'RaB$ecure2026!Admin';
+
+    const existing = await this.getUserByEmail(adminEmail);
+    if (existing) return;
+
+    const passwordHash = await bcrypt.hash(adminPassword, 10);
+    await db.insert(users).values({
+      email: adminEmail,
+      name: 'Platform Admin',
+      passwordHash,
+      role: 'ADMIN',
+      status: 'ACTIVE',
+    });
+    console.log(`Admin user created: ${adminEmail}`);
   }
 }
 

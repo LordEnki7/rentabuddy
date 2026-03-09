@@ -15,6 +15,7 @@ import Dashboard from "@/pages/Dashboard";
 import Messages from "@/pages/Messages";
 import Policies from "@/pages/Policies";
 import BuddyOnboarding from "@/pages/BuddyOnboarding";
+import Admin from "@/pages/Admin";
 
 function Router() {
   return (
@@ -29,6 +30,7 @@ function Router() {
         <Route path="/messages" component={Messages} />
         <Route path="/policies" component={Policies} />
         <Route path="/buddy-onboarding" component={BuddyOnboarding} />
+        <Route path="/admin" component={Admin} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

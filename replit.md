@@ -48,6 +48,13 @@ users, client_profiles, buddy_profiles, bookings, reviews, message_threads, mess
 - React: All `<Link>` components use `<span>` children, never `<a>`
 - Missing DB columns added via SQL `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` (db:push requires interactive confirmation)
 
+## Admin
+
+- Admin user auto-seeded on server startup if not present
+- Credentials stored in env vars: ADMIN_EMAIL, ADMIN_PASSWORD
+- Login at `/login`, admin is redirected to `/admin` panel
+- Admin can: view platform stats, manage users (suspend/activate), verify buddies (ID/background/certification), view all bookings, manage safety reports (investigate/resolve)
+
 ## Features Implemented
 
 - Dual-role auth (Client/Buddy) with registration and login

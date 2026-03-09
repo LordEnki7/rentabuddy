@@ -144,4 +144,15 @@ export const api = {
     }),
 
   getTransaction: (id: string) => fetchAPI(`/transactions/${id}`),
+
+  // Admin
+  getAdminStats: () => fetchAPI("/admin/stats"),
+  getAdminUsers: () => fetchAPI("/admin/users"),
+  updateUserStatus: (id: string, status: string) =>
+    fetchAPI(`/admin/users/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }) }),
+  getAdminBookings: () => fetchAPI("/admin/bookings"),
+  updateBuddyVerification: (userId: string, field: string, value: boolean) =>
+    fetchAPI(`/admin/buddies/${userId}/verify`, { method: "PATCH", body: JSON.stringify({ field, value }) }),
+  updateSafetyReportStatus: (id: string, status: string) =>
+    fetchAPI(`/admin/safety-reports/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }) }),
 };

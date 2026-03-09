@@ -26,7 +26,11 @@ export default function Login() {
         title: "Welcome back!",
         description: "You've successfully logged in.",
       });
-      setLocation("/dashboard");
+      if (result?.user?.role === "ADMIN") {
+        setLocation("/admin");
+      } else {
+        setLocation("/dashboard");
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",

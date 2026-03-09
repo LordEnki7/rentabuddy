@@ -81,6 +81,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <DropdownMenuItem onClick={() => setLocation("/dashboard")}>
                     Dashboard
                   </DropdownMenuItem>
+                  {user.role === "ADMIN" && (
+                    <DropdownMenuItem onClick={() => setLocation("/admin")}>
+                      Admin Panel
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="h-4 w-4 mr-2" />
                     Log out
