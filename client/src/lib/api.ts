@@ -63,10 +63,11 @@ export const api = {
     }),
 
   // Buddies
-  getBuddies: (filters?: { city?: string; maxRate?: number; activities?: string[] }) => {
+  getBuddies: (filters?: { city?: string; maxRate?: number; activities?: string[]; minRating?: number }) => {
     const params = new URLSearchParams();
     if (filters?.city) params.append("city", filters.city);
     if (filters?.maxRate) params.append("maxRate", filters.maxRate.toString());
+    if (filters?.minRating) params.append("minRating", filters.minRating.toString());
     if (filters?.activities) filters.activities.forEach(a => params.append("activities", a));
     const query = params.toString();
     return fetchAPI(`/buddies${query ? `?${query}` : ""}`);
@@ -130,6 +131,8 @@ export const api = {
       method: "POST",
       body: JSON.stringify(report),
     }),
+
+  getMySafetyReports: () => fetchAPI("/safety-reports/mine"),
 
   getSafetyReports: () => fetchAPI("/safety-reports"),
 

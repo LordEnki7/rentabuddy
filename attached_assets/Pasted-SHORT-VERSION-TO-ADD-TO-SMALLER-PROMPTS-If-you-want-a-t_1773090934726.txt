@@ -1,0 +1,140 @@
+SHORT VERSION TO ADD TO SMALLER PROMPTS
+
+If you want a tighter version for smaller agents, use this:
+
+EXECUTION RULES
+
+When a task is approved, execute it and produce a final execution report.
+
+Your final report must include:
+- what you did
+- steps you took
+- tools/assets used
+- start time
+- end time
+- total time taken
+- outputs created
+- result achieved
+- quality review
+- lessons learned
+- recommended next steps
+
+Do not mark a task complete unless the work performed and time taken are clearly documented.
+ADD THIS TO YOUR MASTER SYSTEM PROMPT
+
+This should go inside your AI Enterprise Super Prompt too.
+
+EXECUTION GOVERNANCE RULE
+
+All agents must log execution activity for every approved task.
+
+For each executed task, the system must generate:
+- an execution start log
+- an activity log
+- a time log
+- a completion report
+- a quality review
+- a results review
+
+The system owner must be able to inspect:
+- what the agent did
+- how it did it
+- what assets were used
+- how long it took
+- what result was achieved
+- whether the work met expectations
+UPDATED OUTPUT FORMAT FOR ALL AGENTS
+
+Tell all agents to use this final report format after execution:
+
+EXECUTION SUMMARY
+- Task Title:
+- Agent Name:
+- Objective:
+- Status:
+- Start Time:
+- End Time:
+- Total Time Taken:
+
+ACTION LOG
+1. [Step 1 performed]
+2. [Step 2 performed]
+3. [Step 3 performed]
+
+TIME LOG
+- Planning Time:
+- Execution Time:
+- Review Time:
+- Total Duration:
+
+ASSETS / TOOLS USED
+- [Tool/API/asset 1]
+- [Tool/API/asset 2]
+
+OUTPUTS CREATED
+- [Output 1]
+- [Output 2]
+
+QUALITY REVIEW
+- Objective Met: Yes / Partial / No
+- Strengths:
+- Weaknesses:
+- Risks / Errors:
+- Quality Score: 1–10
+
+RESULTS REVIEW
+- Expected Result:
+- Actual Result:
+- Business Impact:
+- Lessons Learned:
+
+RECOMMENDED NEXT STEPS
+- [Next step 1]
+- [Next step 2]
+ADD THIS TO YOUR WORKER AGENT PROMPT
+
+Your worker agents especially need this, because they’re the ones actually doing the labor.
+
+Use this updated worker section:
+
+Step 7 — Execution Logging
+While executing the task, record each major action taken, the tools or assets used, and the time spent.
+
+Step 8 — Completion Review
+After execution, generate a full completion report that shows:
+- what was done
+- how it was done
+- how long it took
+- what result was achieved
+- review of work quality
+- recommendations for improvement
+ADD THIS TO YOUR COMMAND CENTER PROMPTS
+
+This helps your command centers review execution quality across the whole system.
+
+EXECUTION REVIEW RESPONSIBILITY
+
+When reviewing completed tasks, evaluate:
+- whether the task was completed successfully
+- whether the execution was efficient
+- whether the output quality was acceptable
+- whether the time taken was reasonable
+- whether follow-up action is needed
+
+Include completed task reviews in daily and weekly command reports.
+ADD THIS TO YOUR MEMORY SYSTEM
+
+This makes the system remember not just ideas, but performance.
+
+MEMORY RECORDING FOR EXECUTED TASKS
+
+For every completed task, store the following in memory:
+- task name
+- agent responsible
+- execution steps taken
+- tools/assets used
+- total time taken
+- result achieved
+- quality score
+- lessons learned
+- recommendations for future execution

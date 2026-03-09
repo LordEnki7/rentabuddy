@@ -55,7 +55,7 @@ export interface IStorage {
   createBuddyProfile(profile: InsertBuddyProfile): Promise<BuddyProfile>;
   getBuddyProfile(userId: string): Promise<BuddyProfile | undefined>;
   updateBuddyProfile(userId: string, updates: Partial<InsertBuddyProfile>): Promise<BuddyProfile | undefined>;
-  getAllBuddies(filters?: { city?: string, maxRate?: number, activities?: string[] }): Promise<Array<BuddyProfile & { user: User }>>;
+  getAllBuddies(filters?: { city?: string, maxRate?: number, activities?: string[], minRating?: number }): Promise<Array<BuddyProfile & { user: User }>>;
 
   // Bookings
   createBooking(booking: InsertBooking): Promise<Booking>;
@@ -81,6 +81,7 @@ export interface IStorage {
   // Safety Reports
   createSafetyReport(report: InsertSafetyReport): Promise<SafetyReport>;
   getSafetyReports(): Promise<SafetyReport[]>;
+  getSafetyReportsByUser(userId: string): Promise<SafetyReport[]>;
 
   // Transactions
   createTransaction(transaction: InsertTransaction): Promise<Transaction>;
@@ -179,14 +180,34 @@ export class DbStorage implements IStorage {
     return profile;
   }
 
-  async getAllBuddies(filters?: { city?: string, maxRate?: number, activities?: string[] }): Promise<Array<BuddyProfile & { user: User }>> {
-    let baseQuery = db.select()
+  async getAllBuddies(filters?: { city?: string, maxRate?: number, activities?: string[], minRating?: number }): Promise<Array<BuddyProfile & { user: User }>> {
+    const conditions = [eq(users.status, 'ACTIVE')];
+
+    if (filters?.city) {
+      conditions.push(like(buddyProfiles.city, `%${filters.city}%`));
+    }
+    if (filters?.maxRate) {
+      conditions.push(sql`CAST(${buddyProfiles.hourlyRate} AS numeric) <= ${filters.maxRate}`);
+    }
+    if (filters?.minRating) {
+      conditions.push(sql`CAST(${buddyProfiles.ratingAverage} AS numeric) >= ${filters.minRating}`);
+    }
+
+    const result = await db.select()
       .from(buddyProfiles)
       .innerJoin(users, eq(users.id, buddyProfiles.userId))
-      .where(eq(users.status, 'ACTIVE')) as any;
+      .where(and(...conditions));
 
-    const result = await baseQuery;
-    return result.map((r: any) => ({ ...r.buddy_profiles, user: r.users }));
+    let mapped = result.map((r: any) => ({ ...r.buddy_profiles, user: r.users }));
+
+    if (filters?.activities && filters.activities.length > 0) {
+      mapped = mapped.filter((b: any) => {
+        if (!b.activities) return false;
+        return filters.activities!.some(a => b.activities.includes(a));
+      });
+    }
+
+    return mapped;
   }
 
   // Booking methods
@@ -266,12 +287,27 @@ export class DbStorage implements IStorage {
   }
 
   async getMessageThreads(userId: string): Promise<MessageThread[]> {
-    return await db.select().from(messageThreads)
+    const threads = await db.select().from(messageThreads)
       .where(or(
         eq(messageThreads.clientId, userId),
         eq(messageThreads.buddyId, userId)
       ))
       .orderBy(desc(messageThreads.lastMessageAt));
+    return threads;
+  }
+
+  async getMessageThreadsWithUsers(userId: string): Promise<Array<MessageThread & { clientName: string; buddyName: string }>> {
+    const threads = await this.getMessageThreads(userId);
+    const enriched = await Promise.all(threads.map(async (thread) => {
+      const client = await this.getUserById(thread.clientId);
+      const buddy = await this.getUserById(thread.buddyId);
+      return {
+        ...thread,
+        clientName: client?.name || "Unknown",
+        buddyName: buddy?.name || "Unknown",
+      };
+    }));
+    return enriched;
   }
 
   async getMessages(threadId: string): Promise<Message[]> {
@@ -334,6 +370,12 @@ export class DbStorage implements IStorage {
 
   async getSafetyReports(): Promise<SafetyReport[]> {
     return await db.select().from(safetyReports)
+      .orderBy(desc(safetyReports.createdAt));
+  }
+
+  async getSafetyReportsByUser(userId: string): Promise<SafetyReport[]> {
+    return await db.select().from(safetyReports)
+      .where(eq(safetyReports.reporterId, userId))
       .orderBy(desc(safetyReports.createdAt));
   }
 

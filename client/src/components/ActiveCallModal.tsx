@@ -3,18 +3,22 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { PhoneOff, Mic, MicOff, Volume2 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { SafetyReportDialog } from "./SafetyReportDialog";
 
 interface ActiveCallModalProps {
   isOpen: boolean;
   onClose: () => void;
   buddyName: string;
   buddyImage?: string;
+  buddyUserId?: string;
+  bookingId?: string;
 }
 
-export function ActiveCallModal({ isOpen, onClose, buddyName, buddyImage }: ActiveCallModalProps) {
+export function ActiveCallModal({ isOpen, onClose, buddyName, buddyImage, buddyUserId, bookingId }: ActiveCallModalProps) {
   const [duration, setDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [status, setStatus] = useState("Connecting...");
+  const [showSafetyReport, setShowSafetyReport] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -108,12 +112,25 @@ export function ActiveCallModal({ isOpen, onClose, buddyName, buddyImage }: Acti
 
           {/* Safety Action */}
           <div className="z-10 w-full px-8">
-            <Button variant="outline" className="w-full border-red-500/30 text-red-400 hover:bg-red-950/30 hover:text-red-300 transition-colors">
+            <Button
+              variant="outline"
+              className="w-full border-red-500/30 text-red-400 hover:bg-red-950/30 hover:text-red-300 transition-colors"
+              onClick={() => setShowSafetyReport(true)}
+              data-testid="button-report-safety-call"
+            >
               Report Safety Issue
             </Button>
           </div>
         </div>
       </DialogContent>
+
+      <SafetyReportDialog
+        isOpen={showSafetyReport}
+        onClose={() => setShowSafetyReport(false)}
+        reportedUserId={buddyUserId}
+        bookingId={bookingId}
+        contextLabel={`Call with ${buddyName}`}
+      />
     </Dialog>
   );
 }

@@ -192,11 +192,12 @@ export async function registerRoutes(
   // Get all buddies (public)
   app.get("/api/buddies", async (req, res) => {
     try {
-      const { city, maxRate, activities } = req.query;
+      const { city, maxRate, activities, minRating } = req.query;
       const filters: any = {};
       
       if (city) filters.city = city as string;
       if (maxRate) filters.maxRate = parseFloat(maxRate as string);
+      if (minRating) filters.minRating = parseFloat(minRating as string);
       if (activities) {
         filters.activities = Array.isArray(activities)
           ? activities
@@ -284,11 +285,27 @@ export async function registerRoutes(
   });
 
   // Update booking status (for buddies)
-  app.patch("/api/bookings/:id/status", requireAuth, requireRole('BUDDY'), async (req, res) => {
+  app.patch("/api/bookings/:id/status", requireAuth, async (req, res) => {
     try {
       const { status } = req.body;
-      const booking = await storage.updateBookingStatus(req.params.id, status);
-      res.json({ booking });
+      const booking = await storage.getBooking(req.params.id);
+      if (!booking) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+
+      const isBuddy = req.session.role === 'BUDDY' && booking.buddyId === req.session.userId;
+      const isClient = req.session.role === 'CLIENT' && booking.clientId === req.session.userId;
+
+      if (isBuddy && ['CONFIRMED', 'REJECTED', 'COMPLETED'].includes(status)) {
+        const updated = await storage.updateBookingStatus(req.params.id, status);
+        return res.json({ booking: updated });
+      }
+      if (isClient && status === 'CANCELED') {
+        const updated = await storage.updateBookingStatus(req.params.id, status);
+        return res.json({ booking: updated });
+      }
+
+      return res.status(403).json({ error: "Not authorized to update this booking" });
     } catch (error: any) {
       console.error("Update booking status error:", error);
       res.status(500).json({ error: "Failed to update booking status" });
@@ -318,7 +335,7 @@ export async function registerRoutes(
   // Get message threads
   app.get("/api/messages/threads", requireAuth, async (req, res) => {
     try {
-      const threads = await storage.getMessageThreads(req.session.userId!);
+      const threads = await storage.getMessageThreadsWithUsers(req.session.userId!);
       res.json({ threads });
     } catch (error: any) {
       console.error("Get message threads error:", error);
@@ -409,6 +426,17 @@ export async function registerRoutes(
     } catch (error: any) {
       console.error("Create safety report error:", error);
       res.status(500).json({ error: "Failed to create report" });
+    }
+  });
+
+  // Get my safety reports
+  app.get("/api/safety-reports/mine", requireAuth, async (req, res) => {
+    try {
+      const reports = await storage.getSafetyReportsByUser(req.session.userId!);
+      res.json({ reports });
+    } catch (error: any) {
+      console.error("Get my safety reports error:", error);
+      res.status(500).json({ error: "Failed to get reports" });
     }
   });
 
