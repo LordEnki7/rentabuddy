@@ -1,0 +1,16 @@
+node_modules
+dist
+.git
+.local
+attached_assets/
+uploads/
+*.png
+*.jpg
+*.jpeg
+*.mp4
+*.mp3
+*.zip
+*.tar.gz
+*.log
+.env
+.env.local

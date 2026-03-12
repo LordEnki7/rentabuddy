@@ -4,3 +4,24 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+.env
+.env.local
+
+# User uploads
+uploads/
+
+# Attached assets (large binaries, PDFs)
+attached_assets/
+
+# Large binary files in root
+*.png
+*.jpg
+*.jpeg
+*.mp4
+*.mp3
+*.zip
+*.gif
+*.webp
+*.wav
+*.avi
+*.mov

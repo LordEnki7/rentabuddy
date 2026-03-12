@@ -66,6 +66,16 @@ users, client_profiles, buddy_profiles, bookings, reviews, message_threads, mess
 - Agent memory: stores latest reports/metrics for trend analysis across runs
 - Agents: Platform Operations (KPIs/briefings), Safety & Governance (flags/escalations), User Engagement (churn/conversion), Quality & Review (ratings/fake detection)
 
+## Deployment (Self-Hosted)
+
+- Dockerfile: multi-stage build (deps → build → production image)
+- docker-compose.yml: app + PostgreSQL, uploads volume
+- .env.example: all required environment variables documented
+- Static assets in `client/public/media/` (logo, hero, texture)
+- Uploads served from `/uploads/` directory
+- APP_URL env var replaces Replit domain references
+- Replit plugins loaded conditionally (fallback when not on Replit)
+
 ## Features Implemented
 
 - Dual-role auth (Client/Buddy) with registration and login

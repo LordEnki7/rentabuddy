@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Shield, Users, CheckCircle, Star, Heart } from "lucide-react";
 import { Link } from "wouter";
-import heroImage from "@assets/generated_images/wholesome_group_of_friends_hanging_out_in_a_park.png";
-import textureImage from "@assets/generated_images/soft_abstract_background_with_warm_teal_and_coral_tones.png";
+const heroImage = "/media/hero.png";
+const textureImage = "/media/texture.png";
 
 export default function Home() {
   return (
