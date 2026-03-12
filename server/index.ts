@@ -98,6 +98,14 @@ app.use((req, res, next) => {
     console.error("Admin seed error:", err);
   }
 
+  // Seed platform agents
+  try {
+    const { seedAgents } = await import("./agents");
+    await seedAgents();
+  } catch (err) {
+    console.error("Agent seed error:", err);
+  }
+
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

@@ -12,9 +12,10 @@ A safety-first platform for non-romantic platonic companionship. Clients hire Bu
 
 ## Key Files
 
-- `shared/schema.ts` - Database schema (users, buddy_profiles, client_profiles, bookings, reviews, messages, availability, safety_reports, transactions)
+- `shared/schema.ts` - Database schema (users, profiles, bookings, reviews, messages, safety_reports, transactions, agents, agent_jobs, agent_runs, agent_memory)
 - `server/routes.ts` - All API endpoints
 - `server/storage.ts` - IStorage interface + DbStorage implementation with Drizzle ORM
+- `server/agents.ts` - Platform agent engine (Operations, Safety, Engagement, Quality agents)
 - `client/src/App.tsx` - Route definitions
 - `client/src/hooks/useAuth.tsx` - Auth context provider
 - `client/src/lib/api.ts` - API client
@@ -54,6 +55,16 @@ users, client_profiles, buddy_profiles, bookings, reviews, message_threads, mess
 - Credentials stored in env vars: ADMIN_EMAIL, ADMIN_PASSWORD
 - Login at `/login`, admin is redirected to `/admin` panel
 - Admin can: view platform stats, manage users (suspend/activate), verify buddies (ID/background/certification), view all bookings, manage safety reports (investigate/resolve)
+
+## Agent System
+
+- 4 platform agents seeded on startup: Operations, Safety, Engagement, Quality
+- Database tables: `agents`, `agent_jobs`, `agent_runs`, `agent_memory`
+- Agent engine: `server/agents.ts` — runs analysis against real platform data
+- Admin Agents tab: run individual agents, run all, generate daily executive brief
+- Each agent produces: action logs, output summaries, quality scores, execution timing
+- Agent memory: stores latest reports/metrics for trend analysis across runs
+- Agents: Platform Operations (KPIs/briefings), Safety & Governance (flags/escalations), User Engagement (churn/conversion), Quality & Review (ratings/fake detection)
 
 ## Features Implemented
 

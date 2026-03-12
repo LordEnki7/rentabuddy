@@ -124,6 +124,55 @@ export const transactions = pgTable("transactions", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// ========== AGENT SYSTEM TABLES ==========
+
+export const agents = pgTable("agents", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  role: text("role").notNull(),
+  description: text("description").notNull(),
+  capabilities: json("capabilities").$type<string[]>().notNull(),
+  status: text("status").notNull().default('ACTIVE'),
+  lastActiveAt: timestamp("last_active_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const agentJobs = pgTable("agent_jobs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  agentId: varchar("agent_id").notNull().references(() => agents.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  priority: text("priority").notNull().default('MEDIUM'),
+  status: text("status").notNull().default('PENDING'),
+  result: json("result").$type<Record<string, any>>(),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const agentRuns = pgTable("agent_runs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  agentId: varchar("agent_id").notNull().references(() => agents.id),
+  jobId: varchar("job_id").references(() => agentJobs.id),
+  actionLog: json("action_log").$type<string[]>().notNull(),
+  outputSummary: text("output_summary"),
+  qualityScore: integer("quality_score"),
+  startTime: timestamp("start_time").notNull(),
+  endTime: timestamp("end_time"),
+  durationMs: integer("duration_ms"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const agentMemory = pgTable("agent_memory", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  agentId: varchar("agent_id").notNull().references(() => agents.id),
+  category: text("category").notNull(),
+  key: text("key").notNull(),
+  value: json("value").$type<Record<string, any>>().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Zod schemas for registration
 export const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -196,6 +245,11 @@ export const insertTransactionSchema = createInsertSchema(transactions).omit({
   createdAt: true,
 });
 
+export const insertAgentSchema = createInsertSchema(agents).omit({ id: true, createdAt: true });
+export const insertAgentJobSchema = createInsertSchema(agentJobs).omit({ id: true, createdAt: true });
+export const insertAgentRunSchema = createInsertSchema(agentRuns).omit({ id: true, createdAt: true });
+export const insertAgentMemorySchema = createInsertSchema(agentMemory).omit({ id: true, createdAt: true, updatedAt: true });
+
 // Select types
 export type User = typeof users.$inferSelect;
 export type ClientProfile = typeof clientProfiles.$inferSelect;
@@ -207,6 +261,10 @@ export type MessageThread = typeof messageThreads.$inferSelect;
 export type Availability = typeof availability.$inferSelect;
 export type SafetyReport = typeof safetyReports.$inferSelect;
 export type Transaction = typeof transactions.$inferSelect;
+export type Agent = typeof agents.$inferSelect;
+export type AgentJob = typeof agentJobs.$inferSelect;
+export type AgentRun = typeof agentRuns.$inferSelect;
+export type AgentMemory = typeof agentMemory.$inferSelect;
 
 // Insert types
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -219,6 +277,10 @@ export type InsertMessageThread = z.infer<typeof insertMessageThreadSchema>;
 export type InsertAvailability = z.infer<typeof insertAvailabilitySchema>;
 export type InsertSafetyReport = z.infer<typeof insertSafetyReportSchema>;
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
+export type InsertAgent = z.infer<typeof insertAgentSchema>;
+export type InsertAgentJob = z.infer<typeof insertAgentJobSchema>;
+export type InsertAgentRun = z.infer<typeof insertAgentRunSchema>;
+export type InsertAgentMemory = z.infer<typeof insertAgentMemorySchema>;
 
 // Auth types
 export type RegisterInput = z.infer<typeof registerSchema>;

@@ -3,7 +3,8 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { registerSchema, loginSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
-import "./types"; // Import session type extensions
+import "./types";
+import { runAllAgents, runSingleAgent, getAgentDashboardData, generateDailyBrief } from "./agents";
 
 // Auth middleware
 function requireAuth(req: Request, res: Response, next: Function) {
@@ -560,6 +561,48 @@ export async function registerRoutes(
     } catch (error: any) {
       console.error("Update safety report status error:", error);
       res.status(500).json({ error: "Failed to update report" });
+    }
+  });
+
+  // ========== AGENT ROUTES ==========
+
+  app.get("/api/admin/agents", requireAuth, requireRole('ADMIN'), async (_req, res) => {
+    try {
+      const data = await getAgentDashboardData();
+      res.json({ agents: data });
+    } catch (error: any) {
+      console.error("Get agents error:", error);
+      res.status(500).json({ error: "Failed to get agents" });
+    }
+  });
+
+  app.post("/api/admin/agents/run-all", requireAuth, requireRole('ADMIN'), async (_req, res) => {
+    try {
+      const results = await runAllAgents();
+      res.json({ results });
+    } catch (error: any) {
+      console.error("Run all agents error:", error);
+      res.status(500).json({ error: "Failed to run agents" });
+    }
+  });
+
+  app.post("/api/admin/agents/:id/run", requireAuth, requireRole('ADMIN'), async (req, res) => {
+    try {
+      const result = await runSingleAgent(req.params.id);
+      res.json({ result });
+    } catch (error: any) {
+      console.error("Run agent error:", error);
+      res.status(500).json({ error: "Failed to run agent" });
+    }
+  });
+
+  app.post("/api/admin/agents/daily-brief", requireAuth, requireRole('ADMIN'), async (_req, res) => {
+    try {
+      const brief = await generateDailyBrief();
+      res.json({ brief });
+    } catch (error: any) {
+      console.error("Generate daily brief error:", error);
+      res.status(500).json({ error: "Failed to generate brief" });
     }
   });
 
