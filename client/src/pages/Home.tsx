@@ -72,8 +72,16 @@ export default function Home() {
     <div className="flex flex-col">
       {/* Hero Section */}
       <section className="relative pt-20 pb-32 overflow-hidden">
-        <div className="absolute inset-0 z-0 opacity-30">
-          <img src={textureImage} alt="" className="w-full h-full object-cover" />
+        {/* gradient base always visible */}
+        <div className="absolute inset-0 z-0 bg-gradient-to-br from-primary/5 via-secondary/5 to-primary/10" />
+        {/* texture overlay on top of gradient */}
+        <div className="absolute inset-0 z-0 opacity-20">
+          <img
+            src={textureImage}
+            alt=""
+            className="w-full h-full object-cover"
+            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+          />
         </div>
 
         <div className="container mx-auto px-4 relative z-10">
@@ -126,11 +134,12 @@ export default function Home() {
             </div>
 
             <div className="relative animate-in slide-in-from-right-10 duration-1000 fade-in delay-200">
-              <div className="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-[4/3] rotate-2 hover:rotate-0 transition-transform duration-500">
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-[4/3] rotate-2 hover:rotate-0 transition-transform duration-500 bg-gradient-to-br from-primary/20 via-secondary/30 to-primary/10">
                 <img
                   src={heroImage}
                   alt="Friends laughing together"
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
                 />
                 <div className="absolute bottom-6 left-6 bg-white/90 backdrop-blur-md p-4 rounded-xl shadow-lg max-w-xs border border-white/50">
                   <div className="flex items-center gap-3 mb-2">
