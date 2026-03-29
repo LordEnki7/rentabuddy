@@ -6,6 +6,7 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import { storage } from "./storage";
+import { runMigrations } from "./migrate";
 
 const app = express();
 const httpServer = createServer(app);
@@ -91,6 +92,14 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Run database migrations first — create all tables if they don't exist
+  try {
+    await runMigrations();
+  } catch (err) {
+    console.error("Migration error:", err);
+    process.exit(1);
+  }
+
   // Seed admin user on startup
   try {
     await (storage as any).seedAdminUser();
