@@ -32,6 +32,8 @@ export default function Dashboard() {
   const [submittingReview, setSubmittingReview] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
   const [showSafetyReport, setShowSafetyReport] = useState(false);
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [settingsForm, setSettingsForm] = useState<Record<string, any> | null>(null);
 
   const { data: bookingsData } = useQuery({
     queryKey: ["bookings"],
@@ -124,6 +126,48 @@ export default function Dashboard() {
 
   const isBuddyProfileIncomplete = user?.role === "BUDDY" && profile &&
     (!(profile as any).headline || !(profile as any).bio || !(profile as any).hourlyRate);
+
+  const getSettingsForm = () => {
+    if (settingsForm) return settingsForm;
+    const bp = profile as any;
+    return {
+      headline: bp?.headline || "",
+      bio: bp?.bio || "",
+      hourlyRate: bp?.hourlyRate || "",
+      city: bp?.city || "",
+      activities: bp?.activities || [],
+      languages: bp?.languages || [],
+      shortBio: bp?.shortBio || "",
+    };
+  };
+
+  const handleSaveSettings = async () => {
+    setSavingSettings(true);
+    try {
+      const form = getSettingsForm();
+      if (user?.role === "BUDDY") {
+        await api.updateBuddyProfile({
+          headline: form.headline,
+          bio: form.bio,
+          hourlyRate: form.hourlyRate,
+          city: form.city,
+          activities: form.activities,
+          languages: form.languages,
+        });
+      } else {
+        await api.updateClientProfile({
+          city: form.city,
+          shortBio: form.shortBio,
+        });
+      }
+      await refetch();
+      toast({ title: "Profile saved!", description: "Your profile has been updated." });
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Save failed", description: err.message || "Failed to save settings." });
+    } finally {
+      setSavingSettings(false);
+    }
+  };
 
   if (!user) {
     return (
@@ -829,64 +873,170 @@ export default function Dashboard() {
 
         {/* Settings Tab */}
         <TabsContent value="settings" className="space-y-6">
-          <Card data-testid="card-settings">
+          {/* Profile Photo */}
+          <Card data-testid="card-settings-photo">
             <CardHeader>
-              <CardTitle>Account Settings</CardTitle>
-              <CardDescription>Manage your account preferences</CardDescription>
+              <CardTitle>Profile Photo</CardTitle>
+              <CardDescription>This is shown on your public profile and in bookings.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <Label>Profile Photo</Label>
-                <div className="flex items-center gap-6">
-                  <div className="relative group">
-                    <Avatar className="h-24 w-24 border-2 border-muted">
-                      <AvatarImage src={profileImage || undefined} />
-                      <AvatarFallback className="text-2xl bg-primary/10 text-primary">
-                        {user?.name.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploadingImage}
-                      className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                      data-testid="button-settings-upload-image"
-                    >
-                      {uploadingImage ? <Loader2 className="h-8 w-8 text-white animate-spin" /> : <Camera className="h-8 w-8 text-white" />}
-                    </button>
-                  </div>
-                  <div className="space-y-2">
-                    <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage} data-testid="button-change-photo">
-                      {uploadingImage ? "Uploading..." : "Change Photo"}
-                    </Button>
-                    <p className="text-xs text-muted-foreground">JPG, PNG or GIF. Max 5MB.</p>
-                  </div>
+            <CardContent>
+              <div className="flex items-center gap-6">
+                <div className="relative group">
+                  <Avatar className="h-24 w-24 border-2 border-muted">
+                    <AvatarImage src={profileImage || undefined} />
+                    <AvatarFallback className="text-2xl bg-primary/10 text-primary">
+                      {user?.name.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingImage}
+                    className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                    data-testid="button-settings-upload-image"
+                  >
+                    {uploadingImage ? <Loader2 className="h-8 w-8 text-white animate-spin" /> : <Camera className="h-8 w-8 text-white" />}
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage} data-testid="button-change-photo">
+                    {uploadingImage ? "Uploading..." : "Change Photo"}
+                  </Button>
+                  <p className="text-xs text-muted-foreground">JPG or PNG. Max 5MB.</p>
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input id="name" placeholder="Your name" defaultValue={user?.name} data-testid="input-name" />
+            </CardContent>
+          </Card>
+
+          {/* Profile Info */}
+          <Card data-testid="card-settings-profile">
+            <CardHeader>
+              <CardTitle>Profile Information</CardTitle>
+              <CardDescription>
+                {user?.role === "BUDDY"
+                  ? "This information is displayed publicly on your buddy profile."
+                  : "Update your personal details."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="settings-name">Full Name</Label>
+                  <Input id="settings-name" value={user?.name || ""} disabled className="bg-muted/30" data-testid="input-settings-name" />
+                  <p className="text-xs text-muted-foreground">Contact support to change your name.</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="settings-email">Email</Label>
+                  <Input id="settings-email" type="email" value={user?.email || ""} disabled className="bg-muted/30" data-testid="input-settings-email" />
+                </div>
               </div>
+
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="your@email.com" defaultValue={user?.email} disabled data-testid="input-email" />
+                <Label htmlFor="settings-city">City</Label>
+                <Input
+                  id="settings-city"
+                  placeholder="e.g. New York, NY"
+                  value={getSettingsForm().city}
+                  onChange={(e) => setSettingsForm({ ...getSettingsForm(), city: e.target.value })}
+                  data-testid="input-settings-city"
+                />
               </div>
+
               {user?.role === "BUDDY" && (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="rate">Hourly Rate ($)</Label>
-                    <Input id="rate" type="number" placeholder="25" defaultValue={buddyProfile?.hourlyRate} data-testid="input-rate" />
+                    <Label htmlFor="settings-headline">Headline</Label>
+                    <Input
+                      id="settings-headline"
+                      placeholder="e.g. Friendly local guide & coffee enthusiast"
+                      value={getSettingsForm().headline}
+                      onChange={(e) => setSettingsForm({ ...getSettingsForm(), headline: e.target.value })}
+                      data-testid="input-settings-headline"
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="headline">Headline</Label>
-                    <Input id="headline" placeholder="Your tagline..." defaultValue={buddyProfile?.headline} data-testid="input-headline" />
+                    <Label htmlFor="settings-bio">Bio</Label>
+                    <Textarea
+                      id="settings-bio"
+                      placeholder="Tell clients about yourself, your interests, and what makes you a great buddy..."
+                      value={getSettingsForm().bio}
+                      onChange={(e) => setSettingsForm({ ...getSettingsForm(), bio: e.target.value })}
+                      rows={5}
+                      data-testid="textarea-settings-bio"
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="bio">Bio</Label>
-                    <Textarea id="bio" placeholder="Tell clients about yourself..." defaultValue={buddyProfile?.bio} data-testid="textarea-bio" />
+                    <Label htmlFor="settings-rate">Hourly Rate ($)</Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">$</span>
+                      <Input
+                        id="settings-rate"
+                        type="number"
+                        min={5}
+                        max={500}
+                        placeholder="25"
+                        value={getSettingsForm().hourlyRate}
+                        onChange={(e) => setSettingsForm({ ...getSettingsForm(), hourlyRate: e.target.value })}
+                        className="pl-7"
+                        data-testid="input-settings-rate"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">Set your rate per hour. Platform average is $30/hr.</p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label>Activities You Offer</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {["Coffee & Conversation", "Hiking & Outdoors", "Museum Tours", "Gym Partner", "Shopping Companion", "Movie Buddy", "Restaurant Explorer", "Concert & Events", "Dog Walking", "Board Games", "Photography Tours", "Language Practice"].map((activity) => {
+                        const selected = (getSettingsForm().activities || []).includes(activity);
+                        return (
+                          <button
+                            key={activity}
+                            type="button"
+                            onClick={() => {
+                              const current = getSettingsForm().activities || [];
+                              setSettingsForm({
+                                ...getSettingsForm(),
+                                activities: selected
+                                  ? current.filter((a: string) => a !== activity)
+                                  : [...current, activity],
+                              });
+                            }}
+                            className={`text-left px-3 py-2 rounded-lg border text-sm transition-colors ${
+                              selected
+                                ? "bg-primary/10 border-primary/30 text-primary font-medium"
+                                : "border-border hover:border-primary/20 hover:bg-muted/50"
+                            }`}
+                            data-testid={`button-activity-toggle-${activity.toLowerCase().replace(/\s+/g, "-")}`}
+                          >
+                            {activity}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </>
               )}
-              <Button data-testid="button-save-settings">Save Changes</Button>
+
+              {user?.role === "CLIENT" && (
+                <div className="space-y-2">
+                  <Label htmlFor="settings-short-bio">Short Bio</Label>
+                  <Textarea
+                    id="settings-short-bio"
+                    placeholder="A little about yourself..."
+                    value={getSettingsForm().shortBio}
+                    onChange={(e) => setSettingsForm({ ...getSettingsForm(), shortBio: e.target.value })}
+                    rows={3}
+                    data-testid="textarea-settings-short-bio"
+                  />
+                </div>
+              )}
+
+              <div className="flex justify-end">
+                <Button onClick={handleSaveSettings} disabled={savingSettings} data-testid="button-save-settings">
+                  {savingSettings ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  {savingSettings ? "Saving..." : "Save Changes"}
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
