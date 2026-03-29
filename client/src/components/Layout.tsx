@@ -1,7 +1,8 @@
 import { Link, useLocation } from "wouter";
-import { ShieldCheck, HeartHandshake, Menu, X, Home, Search, User, LogOut } from "lucide-react";
+import { ShieldCheck, Menu, Home, Search, User, LogOut } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   DropdownMenu,
@@ -17,7 +18,8 @@ const logoImage = "/media/logo.png";
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const { user, profile, logout } = useAuth();
+  const profileImage = (profile as any)?.profileImage;
 
   const handleLogout = async () => {
     await logout();
@@ -70,9 +72,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="font-medium">
-                    <User className="h-4 w-4 mr-2" />
-                    {user.name}
+                  <Button variant="ghost" className="flex items-center gap-2 font-medium px-2">
+                    <Avatar className="h-8 w-8 border border-border">
+                      <AvatarImage src={profileImage || undefined} alt={user.name} />
+                      <AvatarFallback className="bg-primary/10 text-primary text-sm font-bold">
+                        {user.name.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="hidden lg:inline">{user.name}</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -116,9 +123,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <nav className="flex flex-col gap-4 mt-8">
                   {user ? (
                     <>
-                      <div className="px-4 py-2 bg-muted rounded-lg">
-                        <p className="font-medium">{user.name}</p>
-                        <p className="text-sm text-muted-foreground">{user.email}</p>
+                      <div className="px-4 py-2 bg-muted rounded-lg flex items-center gap-3">
+                        <Avatar className="h-10 w-10 border border-border">
+                          <AvatarImage src={profileImage || undefined} alt={user.name} />
+                          <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                            {user.name.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">{user.name}</p>
+                          <p className="text-sm text-muted-foreground">{user.email}</p>
+                        </div>
                       </div>
                       <Link href="/dashboard" onClick={() => setIsOpen(false)}>
                         <Button variant="outline" className="w-full justify-start">Dashboard</Button>
