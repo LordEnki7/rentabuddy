@@ -5,6 +5,7 @@ import { registerSchema, loginSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import "./types";
 import { runAllAgents, runSingleAgent, getAgentDashboardData, generateDailyBrief } from "./agents";
+import { nigStatusHandler } from "./nig-status";
 
 // Auth middleware
 function requireAuth(req: Request, res: Response, next: Function) {
@@ -605,6 +606,9 @@ export async function registerRoutes(
       res.status(500).json({ error: "Failed to generate brief" });
     }
   });
+
+  // ========== NIG COMMAND CENTER STATUS ==========
+  app.get("/api/nig-status", nigStatusHandler);
 
   return httpServer;
 }

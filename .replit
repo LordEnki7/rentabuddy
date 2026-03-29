@@ -47,3 +47,4 @@ mockupState = "FULLSTACK"
 [userenv.shared]
 ADMIN_EMAIL = "admin@rentabuddy.com"
 ADMIN_PASSWORD = "RaB$ecure2026!Admin"
+DIVISION_NAME = "rentabuddy"
