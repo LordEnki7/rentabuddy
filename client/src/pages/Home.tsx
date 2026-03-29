@@ -4,9 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Shield, Users, CheckCircle, Star, Heart, MapPin, Clock, Coffee, Mountain, Camera, Music, Dumbbell, ShoppingBag, ArrowRight, Quote } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
-
-const heroImage = "/media/hero.png";
-const textureImage = "/media/texture.png";
+import heroImage from "@/assets/hero.png";
+import textureImage from "@/assets/texture.png";
 
 const TESTIMONIALS = [
   {
