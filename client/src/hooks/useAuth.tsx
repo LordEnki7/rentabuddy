@@ -14,7 +14,7 @@ interface AuthContextType {
   user: AuthUser | null;
   profile: ClientProfile | BuddyProfile | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<{ user: AuthUser }>;
   register: (data: any) => Promise<void>;
   logout: () => Promise<void>;
   refetch: () => Promise<void>;
@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refetch();
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<{ user: AuthUser }> => {
     const data = await api.login({ email, password });
     setUser(data.user);
     setLoading(false);
@@ -55,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (e) {
       // Profile fetch may fail initially, that's ok
     }
+    return { user: data.user };
   };
 
   const register = async (data: any) => {

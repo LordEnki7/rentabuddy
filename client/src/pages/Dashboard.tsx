@@ -178,7 +178,7 @@ export default function Dashboard() {
   }
 
   if (isBuddyProfileIncomplete) {
-    window.location.href = "/buddy-onboarding";
+    setLocation("/buddy-onboarding");
     return (
       <div className="container mx-auto px-4 py-12 text-center">
         <p className="text-muted-foreground">Redirecting to complete your profile...</p>
@@ -194,7 +194,7 @@ export default function Dashboard() {
   const canceledBookings = bookings.filter((b: any) => b.status === "CANCELED" || b.status === "REJECTED");
   const totalEarnings = completedBookings.reduce((sum: number, b: any) => sum + parseFloat(b.totalPrice || 0), 0);
   const completionRate = bookings.length > 0
-    ? Math.round((completedBookings.length / (completedBookings.length + canceledBookings.length || 1)) * 100)
+    ? Math.round((completedBookings.length / ((completedBookings.length + canceledBookings.length) || 1)) * 100)
     : 0;
 
   const buddyProfile = profile as any;

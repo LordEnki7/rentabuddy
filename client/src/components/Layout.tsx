@@ -207,7 +207,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
           
           <div className="pt-2 border-t border-border/50 flex flex-col md:flex-row justify-between items-center gap-2">
-            <p className="text-sm text-muted-foreground">© 2025 Rent-A-Buddy. All rights reserved.</p>
+            <p className="text-sm text-muted-foreground">© 2026 Rent-A-Buddy. All rights reserved.</p>
             <div className="px-4 py-2 bg-secondary/10 rounded-full border border-secondary/20">
               <p className="text-xs font-medium text-secondary-foreground flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-secondary block"></span>
