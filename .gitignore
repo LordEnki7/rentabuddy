@@ -25,3 +25,10 @@ attached_assets/
 *.wav
 *.avi
 *.mov
+
+# But allow app assets needed for the build
+!client/src/assets/*.png
+!client/src/assets/*.jpg
+!client/src/assets/*.jpeg
+!client/src/assets/*.gif
+!client/src/assets/*.webp
