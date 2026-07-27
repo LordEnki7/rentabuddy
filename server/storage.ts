@@ -181,11 +181,17 @@ export class DbStorage implements IStorage {
   }
 
   async updateBuddyProfile(userId: string, updates: Partial<InsertBuddyProfile>): Promise<BuddyProfile | undefined> {
+    // Drizzle requires Date objects for timestamp columns — coerce any ISO strings
+    const timestampFields = ['codeOfConductAcceptedAt', 'safetyProtocolAcceptedAt', 'createdAt', 'updatedAt'] as const;
+    const sanitized: any = { ...updates };
+    for (const field of timestampFields) {
+      if (typeof sanitized[field] === 'string') {
+        sanitized[field] = new Date(sanitized[field]);
+      }
+    }
+
     const [profile] = await db.update(buddyProfiles)
-      .set({ 
-        ...updates, 
-        updatedAt: new Date() 
-      } as any)
+      .set({ ...sanitized, updatedAt: new Date() })
       .where(eq(buddyProfiles.userId, userId))
       .returning();
     return profile;
