@@ -19,8 +19,11 @@ declare module "http" {
 
 // Create session pool - separate from ORM pool
 const sessionPool = new Pool({
-  connectionString: process.env.DATABASE_URL!,
+  connectionString: process.env.RENTABUDDY_SECRET || process.env.DATABASE_URL!,
+  ssl: { rejectUnauthorized: false },
 });
+// Neon requires explicit search_path on every connection
+sessionPool.on("connect", (client) => { client.query("SET search_path TO public"); });
 
 const PgSessionStore = PgSession(session);
 

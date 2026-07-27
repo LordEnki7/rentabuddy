@@ -1,9 +1,13 @@
 import { Pool } from "pg";
 
 export async function runMigrations() {
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL! });
+  const connectionString = process.env.RENTABUDDY_SECRET || process.env.DATABASE_URL!;
+  const pool = new Pool({ connectionString, ssl: { rejectUnauthorized: false } });
 
   try {
+    // Neon requires explicit schema selection
+    await pool.query("SET search_path TO public;");
+
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),

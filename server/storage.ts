@@ -36,7 +36,10 @@ import {
   type RegisterInput,
 } from "@shared/schema";
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL! });
+const connectionString = process.env.RENTABUDDY_SECRET || process.env.DATABASE_URL!;
+const pool = new Pool({ connectionString, ssl: { rejectUnauthorized: false } });
+// Neon requires explicit search_path on every connection
+pool.on("connect", (client) => { client.query("SET search_path TO public"); });
 export const db = drizzle(pool);
 
 export interface IStorage {
