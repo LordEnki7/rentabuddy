@@ -6,7 +6,7 @@ services:
     ports:
       - "5000:5000"
     environment:
-      - DATABASE_URL=${DATABASE_URL}
+      - RENTABUDDY_SECRET=${RENTABUDDY_SECRET}
       - SESSION_SECRET=${SESSION_SECRET}
       - ADMIN_EMAIL=${ADMIN_EMAIL}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
@@ -16,28 +16,6 @@ services:
     volumes:
       - uploads:/app/uploads
     restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
-
-  db:
-    image: postgres:16-alpine
-    environment:
-      - POSTGRES_USER=${PGUSER:-rentabuddy}
-      - POSTGRES_PASSWORD=${PGPASSWORD:-changeme}
-      - POSTGRES_DB=${PGDATABASE:-rentabuddy}
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${PGUSER:-rentabuddy} -d ${PGDATABASE:-rentabuddy}"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 10s
 
 volumes:
   uploads:
-  pgdata:
